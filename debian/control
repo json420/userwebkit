@@ -15,5 +15,5 @@ Depends: ${misc:Depends}, python3 (>= 3.2),
     python3-gobject,
     gir1.2-gtk-3.0,
     gir1.2-webkit-3.0,
-Description: Allows WebKitGtk apps to talk to a usercouch.
+Description: Allows WebKitGtk apps to talk to a local per-user CouchDB.
  FIXME.
