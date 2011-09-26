@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+
+override_dh_auto_install:
+	for pyvers in $(shell py3versions -vr); do \
+		python$$pyvers setup.py install \
+				--install-layout=deb \
+				--root $(CURDIR)/debian/python3-userwebkit; \
+	done
+
