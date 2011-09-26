@@ -30,8 +30,6 @@ from distutils.cmd import Command
 from unittest import TestLoader, TextTestRunner
 from doctest import DocTestSuite
 
-import userwebkit
-
 
 class Test(Command):
     description = 'run unit tests and doc tests'
@@ -66,7 +64,7 @@ setup(
     name='userwebkit',
     description='so WebKitGtk apps can to talk to a usercouch',
     url='https://launchpad.net/userwebkit',
-    version=userwebkit.__version__,
+    version='11.09.0',
     author='Jason Gerard DeRose',
     author_email='jderose@novacut.com',
     license='LGPLv3+',
