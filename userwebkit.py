@@ -35,7 +35,7 @@ from gi.repository import GObject, Gtk, WebKit, Gio
 
 GObject.threads_init()
 
-__version__ = '11.09.0'
+__version__ = '11.09.1'
 APPS = '/usr/share/couchdb/apps/'
 
 
@@ -117,11 +117,14 @@ class Inspector(Gtk.VBox):
         self.pack_start(hbox, False, False, 0)
 
         close = Gtk.Button(stock=Gtk.STOCK_CLOSE)
-        hbox.pack_start(close, False, False, 0)
+        hbox.pack_start(close, False, False, 2)
         close.connect('clicked', self.on_close)
 
         self.reload = Gtk.Button('Reload')
-        hbox.pack_start(self.reload, False, False, 4)
+        hbox.pack_start(self.reload, False, False, 2)
+
+        self.futon = Gtk.Button('CouchDB Futon')
+        hbox.pack_start(self.futon, False, False, 2)
 
         scroll = Gtk.ScrolledWindow()
         self.pack_start(scroll, True, True, 0)
@@ -224,8 +227,13 @@ class BaseUI(object):
         self.vpaned.pack2(self.inspector, True, True)
         self.inspector.show_all()
         self.inspector.reload.connect('clicked', self.on_reload)
+        self.inspector.futon.connect('clicked', self.on_futon)
         return self.inspector.view
 
     def on_reload(self, button):
         self.view.reload_bypass_cache()
+        
+    def on_futon(self, button):
+        self.view.load_uri(self.server._full_url('/_utils/'))
+        
 
