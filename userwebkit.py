@@ -137,6 +137,44 @@ class Inspector(Gtk.VBox):
         self.destroy()
 
 
+class InspectableCouchView(Gtk.VPaned):
+    def __init__(self):
+        super().__init__()
+        self.env = None
+        self.inspector = None
+        self._scroll = Gtk.ScrolledWindow()
+        self.pack1(self._scroll, True, True)
+        self._scroll.set_policy(
+            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+        )
+        self.view = CouchView()
+        self._scroll.add(self.view)
+        self.view.get_settings().set_property('enable-developer-extras', True)
+        inspector = self.view.get_inspector()
+        inspector.connect('inspect-web-view', self.on_inspect)
+
+    def set_env(self, env):
+        self.env = env
+        self.server = microfiber.Server(env)
+        self.view.set_env(env)
+
+    def on_inspect(self, *args):
+        self.inspector = Inspector(self.env)
+        pos = self.get_allocated_height() * 2 // 3
+        self.set_position(pos)
+        self.pack2(self.inspector, True, True)
+        self.inspector.show_all()
+        self.inspector.reload.connect('clicked', self.on_reload)
+        self.inspector.futon.connect('clicked', self.on_futon)
+        return self.inspector.view
+
+    def on_reload(self, button):
+        self.view.reload_bypass_cache()
+
+    def on_futon(self, button):
+        self.view.load_uri(self.server._full_url('/_utils/'))
+
+
 class BaseUI(object):
     app = 'foo'
     page = 'index.html'
