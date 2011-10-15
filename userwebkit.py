@@ -147,6 +147,10 @@ class BaseUI(object):
     proxy_bus = 'org.freedesktop.DC3'
     proxy_path = '/'
 
+    width = 960
+    height = 540
+    maximize = False
+
     def __init__(self, benchmark=False):
         self.benchmark = benchmark
         self.env = None
@@ -163,8 +167,9 @@ class BaseUI(object):
         self.inspector = None
         self.window = Gtk.Window()
         self.window.connect('destroy', self.quit)
-        self.window.maximize()
-        self.window.set_default_size(960, 540)
+        if self.maximize:
+            self.window.maximize()
+        self.window.set_default_size(self.width, self.height)
         self.window.set_title(self.title)
         self.vpaned = Gtk.VPaned()
         self.window.add(self.vpaned)
