@@ -1,5 +1,5 @@
-userwebkit (11.10.1-0~oneiric) oneiric; urgency=low
+userwebkit (11.11.0-0~precise) precise; urgency=low
 
-  * Upstream 11.10.1 pre-release
+  * Upstream 11.11.0 pre-release
 
- -- Jason Gerard DeRose <jderose@novacut.com>  Sat, 01 Oct 2011 00:18:08 +0000
+ -- Jason Gerard DeRose <jderose@novacut.com>  Sun, 13 Nov 2011 06:10:40 +0000

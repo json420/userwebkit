@@ -35,7 +35,7 @@ from gi.repository import GObject, Gtk, WebKit, Gio
 
 GObject.threads_init()
 
-__version__ = '11.10.1'
+__version__ = '11.11.0'
 APPS = '/usr/share/couchdb/apps/'
 
 
