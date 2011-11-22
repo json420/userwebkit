@@ -42,5 +42,12 @@ parser.add_option('--benchmark',
 )
 (options, args) = parser.parse_args()
 
+
 ui = UI(options.benchmark)
+
+def on_title_data(view, obj):
+    print(obj)
+    ui.window.set_title(str(obj))
+
+ui.view.connect('title_data', on_title_data)
 ui.run()

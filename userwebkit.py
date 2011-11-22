@@ -31,6 +31,7 @@ import json
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
 from gi.repository import GObject, Gtk, WebKit, Gio
+from gi.repository.GObject import TYPE_PYOBJECT
 
 
 GObject.threads_init()
@@ -69,9 +70,16 @@ def handler(d):
 
 
 class CouchView(WebKit.WebView):
+    __gsignals__ = {
+        'title_data': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
+            [TYPE_PYOBJECT]
+        ),
+    }
+
     def __init__(self, env=None):
         super().__init__()
         self.connect('resource-request-starting', self._on_request)
+        self.connect('notify::title', self._on_notify_title)
         self.set_env(env)
 
     def set_env(self, env):
@@ -107,6 +115,16 @@ class CouchView(WebKit.WebView):
             return
         for (key, value) in h.items():
             request.props.message.props.request_headers.append(key, value)
+
+    def _on_notify_title(self, view, notify):
+        title = view.get_property('title')
+        if title is None:
+            return
+        try:
+            obj = json.loads(title)
+            self.emit('title_data', obj)
+        except ValueError:
+            pass
 
 
 class Inspector(Gtk.VBox):
@@ -200,8 +218,6 @@ class BaseUI(object):
         ui = path.join(tree, 'ui')
         self.intree = (path.isfile(setup) and path.isdir(ui))
         self.ui = (ui if self.intree else path.join(APPS, self.app))
-
-    def run(self):
         self.inspector = None
         self.window = Gtk.Window()
         self.window.connect('destroy', self.quit)
@@ -223,6 +239,8 @@ class BaseUI(object):
         inspector.connect('inspect-web-view', self.on_inspect)
         splash = open(path.join(self.ui, self.splash), 'r').read()
         self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
+
+    def run(self):
         self.window.show_all()
         GObject.idle_add(self.on_idle)
         Gtk.main()

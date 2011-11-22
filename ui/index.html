@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>foo</title>
 <style>
 body {
     font-family: Ubuntu;
@@ -14,17 +15,44 @@ body {
 <script src="/_apps/dc3/couch.js"></script>
 <script src="/_apps/dc3/base.js"></script>
 <script>
+"use strict"; 
+
 // The `novacut` CouchDB database:
 var db = new couch.Database('novacut');
 
 function hello() {
+    $('button').onclick = click;
     var s = new couch.Server();
     $('hello').textContent = 'Demo is talking to CouchDB ' + s.get()['version'];
+}
+
+var Signal = {
+    i: 0,
+
+    emit: function() {
+        var args = Array.prototype.slice.call(arguments);
+        var obj = {
+            i: Signal.i,
+            signal: args[0],
+            args: args.slice(1),
+        };
+        Signal.i += 1;
+        document.title = JSON.stringify(obj);
+    }   
+}
+
+function click() {
+    var b = $('button');
+    b.classList.toggle('active');
+    var active = b.classList.contains('active');
+    b.textContent = active ? 'Stop' : 'Start';
+    Signal.emit('active', active);
 }
 </script>
 </head>
 <body onload="hello()">
 <p id="hello"></p>
 <p>Right click and <strong>Inspect Element</strong></p>
+<button id="button">Start</button>
 </body>
 </html>
