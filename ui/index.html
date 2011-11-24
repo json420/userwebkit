@@ -23,7 +23,7 @@ var db = new couch.Database('novacut');
 function hello() {
     $('button').onclick = click;
     var s = new couch.Server();
-    $('hello').textContent = 'Demo is talking to CouchDB ' + s.get()['version'];
+    $('hello').textContent = 'Demo is talking to CouchDB ' + s.get_sync()['version'];
 }
 
 var Signal = {
