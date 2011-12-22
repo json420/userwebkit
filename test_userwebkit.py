@@ -63,6 +63,31 @@ def random_env():
     }
 
 
+class DummyCallback:
+    def __init__(self):
+        self._calls = []
+
+    def __call__(self, *args):
+        self._calls.append(args)
+
+
+class DummyRequest:
+    def __init__(self, uri):
+        self.__uri = uri
+
+    def get_uri(self):
+        return self.__uri
+
+
+class DummyPolicy:
+    def __init__(self):
+        self._called = False
+
+    def ignore(self):
+        assert self._called is False
+        self._called = True
+
+
 class TestCouchView(TestCase):
     def test_init(self):
         view = userwebkit.CouchView()
@@ -114,4 +139,70 @@ class TestCouchView(TestCase):
         view = userwebkit.CouchView()
         self.assertIsNone(view._env)
         self.assertIsNone(view._on_request(None, None, None, None, None))
+
+    def test_on_nav_policy_decision(self):
+        callback = DummyCallback()
+        view = userwebkit.CouchView()
+        view.connect('open', callback)
+
+        # Make sure on_request() immediately returns when env is None:
+        self.assertIsNone(
+            view._on_nav_policy_decision(None, None, None, None, None)
+        )
+        self.assertEqual(callback._calls, [])
+
+        # When URI netloc and scheme matches env, should return False
+        env = random_env()
+        view.set_env(env)
+        request = DummyRequest(env['url'] + 'foo')
+        self.assertIs(
+            view._on_nav_policy_decision(None, None, request, None, None),
+            False
+        )
+        self.assertEqual(callback._calls, [])
+
+        # For external http, https URI, should fire 'open' signal, call
+        # policy.ignore(), and return True
+        request = DummyRequest('http://www.ubuntu.com/')
+        policy = DummyPolicy()
+        self.assertIs(
+            view._on_nav_policy_decision(None, None, request, None, policy),
+            True
+        )
+        self.assertIs(policy._called, True)
+        self.assertEqual(callback._calls,
+            [
+                (view, 'http://www.ubuntu.com/'),   
+            ]
+        )
+ 
+        request = DummyRequest('https://launchpad.net/novacut')
+        policy = DummyPolicy()
+        self.assertIs(
+            view._on_nav_policy_decision(None, None, request, None, policy),
+            True
+        )
+        self.assertIs(policy._called, True)
+        self.assertEqual(callback._calls,
+            [
+                (view, 'http://www.ubuntu.com/'),
+                (view, 'https://launchpad.net/novacut'),  
+            ]
+        )
+
+        # For other non-internal URI, should just call policy.ignore() and
+        # return True... should not fire 'open'
+        request = DummyRequest('ftp://example.com/')
+        policy = DummyPolicy()
+        self.assertIs(
+            view._on_nav_policy_decision(None, None, request, None, policy),
+            True
+        )
+        self.assertIs(policy._called, True)
+        self.assertEqual(callback._calls,
+            [
+                (view, 'http://www.ubuntu.com/'),
+                (view, 'https://launchpad.net/novacut'),  
+            ]
+        )
 
