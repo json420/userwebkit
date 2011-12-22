@@ -74,12 +74,18 @@ class CouchView(WebKit.WebView):
         'title_data': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
             [TYPE_PYOBJECT]
         ),
+        'open': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
+            [TYPE_PYOBJECT]
+        ),
     }
 
     def __init__(self, env=None):
         super().__init__()
         self.connect('resource-request-starting', self._on_request)
         self.connect('notify::title', self._on_notify_title)
+        self.connect('navigation-policy-decision-requested',
+            self._on_nav_policy_decision
+        )
         self.set_env(env)
 
     def set_env(self, env):
@@ -115,6 +121,35 @@ class CouchView(WebKit.WebView):
             return
         for (key, value) in h.items():
             request.props.message.props.request_headers.append(key, value)
+
+    def _on_nav_policy_decision(self, view, frame, request, nav, policy):
+        """
+        Handle user trying to Navigate away from current page.
+
+        Note that this will be called before `CouchView._on_resource_request()`.
+
+        The *policy* arg is a ``WebPolicyDecision`` instance.  To handle the
+        decision, call one of:
+
+            * ``WebPolicyDecision.ignore()``
+            * ``WebPolicyDecision.use()``
+            * ``WebPolicyDecision.download()``
+
+        And then return ``True``.
+
+        Otherwise, return ``False`` or ``None`` to have the WebKit default
+        behavior apply.
+        """
+        if self._env is None:
+            return
+        uri = request.get_uri()
+        u = urlparse(uri)
+        if u.netloc == self._u.netloc and u.scheme in ('http', 'https'):
+            return False
+        if u.scheme in ('http', 'https'):
+            self.emit('open', uri)
+        policy.ignore()
+        return True
 
     def _on_notify_title(self, view, notify):
         title = view.get_property('title')
@@ -233,6 +268,7 @@ class BaseUI(object):
             Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
         self.view = CouchView()
+        self.view.connect('open', self.on_open)
         self.scroll.add(self.view)
         self.view.get_settings().set_property('enable-developer-extras', True)
         inspector = self.view.get_inspector()
@@ -293,8 +329,12 @@ class BaseUI(object):
 
     def on_reload(self, button):
         self.view.reload_bypass_cache()
-        
+
     def on_futon(self, button):
         self.view.load_uri(self.server._full_url('/_utils/'))
-        
+
+    def on_open(self, view, uri):
+        import subprocess
+        subprocess.check_call(['/usr/bin/xdg-open', uri])
+
 
