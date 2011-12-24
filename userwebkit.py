@@ -36,7 +36,7 @@ from gi.repository.GObject import TYPE_PYOBJECT
 
 GObject.threads_init()
 
-__version__ = '11.12.0'
+__version__ = '11.12.1'
 APPS = '/usr/share/couchdb/apps/'
 
 
@@ -144,7 +144,7 @@ class CouchView(WebKit.WebView):
             return
         uri = request.get_uri()
         u = urlparse(uri)
-        if u.netloc == self._u.netloc and u.scheme in ('http', 'https'):
+        if u.netloc == self._u.netloc or u.scheme == 'file':
             return False
         if u.scheme in ('http', 'https'):
             self.emit('open', uri)

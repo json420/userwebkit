@@ -151,10 +151,20 @@ class TestCouchView(TestCase):
         )
         self.assertEqual(callback._calls, [])
 
-        # When URI netloc and scheme matches env, should return False
+        # When URI netloc env, should return False
         env = random_env()
         view.set_env(env)
         request = DummyRequest(env['url'] + 'foo')
+        self.assertIs(
+            view._on_nav_policy_decision(None, None, request, None, None),
+            False
+        )
+        self.assertEqual(callback._calls, [])
+
+        # When URI scheme is 'file', should return False (needed for Inspector)
+        request = DummyRequest(
+            'file:///usr/share/webkitgtk-3.0/webinspector/inspector.html'
+        )
         self.assertIs(
             view._on_nav_policy_decision(None, None, request, None, None),
             False
