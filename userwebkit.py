@@ -79,7 +79,7 @@ class CouchView(WebKit.WebView):
         ),
     }
 
-    def __init__(self, env=None):
+    def __init__(self, env=None, dmedia_resolver=None):
         super().__init__()
         self.connect('resource-request-starting', self._on_request)
         self.connect('notify::title', self._on_notify_title)
@@ -87,6 +87,7 @@ class CouchView(WebKit.WebView):
             self._on_nav_policy_decision
         )
         self.set_env(env)
+        self._dmedia_resolver = dmedia_resolver
 
     def set_env(self, env):
         self._env = env
@@ -103,6 +104,12 @@ class CouchView(WebKit.WebView):
         if self._env is None:
             return
         uri = request.get_uri()
+        if uri.startswith('dmedia'):
+            if self._dmedia_resolver is None:
+                request.set_uri('')
+            else:
+                request.set_uri(self._dmedia_resolver(uri))
+            return
         u = urlparse(uri)
         if u.netloc != self._u.netloc:
             return
@@ -234,6 +241,7 @@ class BaseUI(object):
     splash = 'splash.html'
     title = 'Fix Me'
     databases = tuple()
+    dmedia_resolver = None
 
     proxy_bus = 'org.freedesktop.DC3'
     proxy_path = '/'
@@ -267,7 +275,7 @@ class BaseUI(object):
         self.scroll.set_policy(
             Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
-        self.view = CouchView()
+        self.view = CouchView(None, self.dmedia_resolver)
         self.view.connect('open', self.on_open)
         self.scroll.add(self.view)
         self.view.get_settings().set_property('enable-developer-extras', True)

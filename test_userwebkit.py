@@ -28,6 +28,9 @@ import os
 from base64 import b32encode
 from urllib.parse import urlparse
 from random import SystemRandom
+from urllib.parse import urlparse
+
+from microfiber import random_id
 
 import userwebkit
 
@@ -74,9 +77,14 @@ class DummyCallback:
 class DummyRequest:
     def __init__(self, uri):
         self.__uri = uri
+        self._set_uri = None
 
     def get_uri(self):
         return self.__uri
+
+    def set_uri(self, uri):
+        assert self._set_uri is None
+        self._set_uri = uri
 
 
 class DummyPolicy:
@@ -86,6 +94,20 @@ class DummyPolicy:
     def ignore(self):
         assert self._called is False
         self._called = True
+
+
+class DummyResolver:
+    def __init__(self):
+        self._calls = []
+
+    def __call__(self, uri):
+        self._calls.append(uri)
+        u = urlparse(uri)
+        assert u.scheme == 'dmedia'
+        _id = u.path
+        assert len(_id) == 48
+        return '/'.join(['/home/.dmedia/files', _id[:2], _id[2:]])
+
 
 
 class TestCouchView(TestCase):
@@ -135,10 +157,46 @@ class TestCouchView(TestCase):
         self.assertIsNone(view._basic)
 
     def test_on_request(self):
-        # Make sure on_request() immediately returns when env is None:
         view = userwebkit.CouchView()
         self.assertIsNone(view._env)
+
+        # Make sure on_request() immediately returns when env is None:
         self.assertIsNone(view._on_request(None, None, None, None, None))
+
+        # Test with dmedia: URI when dmedia_resolver is None:
+        env = random_env()
+        view.set_env(env)
+        _id = random_id(30)
+        uri = 'dmedia:' + _id
+        request = DummyRequest(uri)
+        self.assertIsNone(view._on_request(None, None, None, request, None))
+        self.assertEqual(request._set_uri, '')
+
+        # Test with dmedia: URI when dmedia_resolver is callable:
+        env = random_env()
+        resolver = DummyResolver()
+        view = userwebkit.CouchView(env, resolver)
+        self.assertIs(view._dmedia_resolver, resolver)
+        id1 = random_id(30)
+        uri1 = 'dmedia:' + id1
+        request = DummyRequest(uri1)
+        self.assertIsNone(view._on_request(None, None, None, request, None))
+        self.assertEqual(
+            request._set_uri,
+            '/'.join(['/home/.dmedia/files', id1[:2], id1[2:]])
+        )
+        self.assertEqual(resolver._calls, [uri1])
+        
+        # Lets try one more:
+        id2 = random_id(30)
+        uri2 = 'dmedia:' + id2
+        request = DummyRequest(uri2)
+        self.assertIsNone(view._on_request(None, None, None, request, None))
+        self.assertEqual(
+            request._set_uri,
+            '/'.join(['/home/.dmedia/files', id2[:2], id2[2:]])
+        )
+        self.assertEqual(resolver._calls, [uri1, uri2])
 
     def test_on_nav_policy_decision(self):
         callback = DummyCallback()
