@@ -241,6 +241,7 @@ class BaseUI(object):
     splash = 'splash.html'
     title = 'Fix Me'
     databases = tuple()
+    dmedia_resolver = None
 
     proxy_bus = 'org.freedesktop.DC3'
     proxy_path = '/'
@@ -274,7 +275,7 @@ class BaseUI(object):
         self.scroll.set_policy(
             Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
-        self.view = CouchView()
+        self.view = CouchView(None, self.dmedia_resolver)
         self.view.connect('open', self.on_open)
         self.scroll.add(self.view)
         self.view.get_settings().set_property('enable-developer-extras', True)

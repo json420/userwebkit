@@ -22,8 +22,12 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 import optparse
+from urllib.parse import urlparse
+
+from dmedia import local
 
 from userwebkit import BaseUI
+
 
 
 class UI(BaseUI):
@@ -32,6 +36,30 @@ class UI(BaseUI):
     splash = 'splash.html'
     title = 'Demo'
     databases = ['demo']
+    proxy_bus = 'org.freedesktop.DMedia'
+    local = None
+
+    def dmedia_resolver(self, uri):
+        if self.env is None:
+            return ''
+        if self.local is None:
+            self.local = local.LocalSlave(self.env)
+        try:
+            u = urlparse(uri)
+            _id = u.path
+            doc = self.local.get_doc(_id)
+            if doc.get('proxies'):
+                proxies = doc['proxies']
+                for proxy in proxies:
+                    try:
+                        st = self.local.stat(proxy)
+                        return 'file://' + st.name
+                    except (local.NoSuchFile, local.FileNotLocal):
+                        pass
+            st = self.local.stat2(doc)
+            return 'file://' + st.name
+        except Exception:    
+            return ''
 
 
 parser = optparse.OptionParser()
