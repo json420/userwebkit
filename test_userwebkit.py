@@ -274,3 +274,21 @@ class TestCouchView(TestCase):
             ]
         )
 
+
+class TestBaseUI(TestCase):
+    def test_init(self):
+        inst = userwebkit.BaseUI()
+        self.assertFalse(inst.benchmark)
+        inst = userwebkit.BaseUI(True)
+        self.assertTrue(inst.benchmark)
+
+    def test_get_page(self):
+        inst = userwebkit.BaseUI()
+        self.assertEqual(inst.get_page(), 'index.html')
+
+        class UI(userwebkit.BaseUI):
+            page = 'foo.html'
+
+        inst = userwebkit.BaseUI()
+        self.assertEqual(inst.get_page(), 'index.html')
+

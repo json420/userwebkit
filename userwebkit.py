@@ -284,6 +284,16 @@ class BaseUI(object):
         splash = open(path.join(self.ui, self.splash), 'r').read()
         self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
 
+    def get_page(self):
+        """
+        Override to conditionally choose page to load after env is available.
+
+        This allows you to conditionally load say a welcome page the first time
+        an app is run.  The env will be available and the databases listed in
+        `BaseUI.databases` will have been created.
+        """
+        return self.page
+
     def run(self):
         self.window.show_all()
         GObject.idle_add(self.on_idle)
@@ -316,12 +326,12 @@ class BaseUI(object):
             except microfiber.PreconditionFailed:
                 pass
         if self.intree:
-            url = '/_intree/' + self.page
+            url = '/_intree/' + self.get_page()
             self.server.put(
                 handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
             )
         else:
-            url = '/'.join(['/_apps', self.app, self.page])
+            url = '/'.join(['/_apps', self.app, self.get_page()])
         self.view.set_env(env)
         self.view.load_uri(self.server._full_url(url))
 
