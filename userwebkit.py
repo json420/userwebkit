@@ -27,6 +27,7 @@ import sys
 from os import path
 from urllib.parse import urlparse, parse_qsl
 import json
+import optparse
 
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
@@ -201,9 +202,10 @@ class BaseUI(object):
     app = 'foo'
     page = 'index.html'
     splash = 'splash.html'
-    title = 'Fix Me'
+    title = 'App Window Title'
     databases = tuple()
     dmedia_resolver = None
+    enable_inspector = True
 
     proxy_bus = 'org.freedesktop.DC3'
     proxy_path = '/'
@@ -211,10 +213,11 @@ class BaseUI(object):
     width = 960
     height = 540
     maximize = False
+    version = None
 
-    def __init__(self, benchmark=False):
-        self.benchmark = benchmark
+    def __init__(self):
         self.env = None
+        self.inspector = None
 
         # Figure out if we're running in-tree or not        
         script = path.abspath(sys.argv[0])
@@ -223,8 +226,24 @@ class BaseUI(object):
         ui = path.join(tree, 'ui')
         self.intree = (path.isfile(setup) and path.isdir(ui))
         self.ui = (ui if self.intree else path.join(APPS, self.app))
-        self.inspector = None
-        self.build_window()
+
+    def parse(self):
+        parser = optparse.OptionParser(
+            version=self.version,
+        )
+        parser.add_option('--benchmark',
+            help='benchmark app startup time',
+            action='store_true',
+            default=False,
+        )
+        parser.add_option('--page',
+            help='force UI to load specific HTML5 page, eg "foo.html"',
+        )
+        self.extend_parser(parser)
+        (self.options, self.args) = parser.parse_args()
+
+    def extend_parser(self, parser):
+        pass
 
     def build_window(self):
         self.window = Gtk.Window()
@@ -243,13 +262,19 @@ class BaseUI(object):
         self.view = CouchView(None, self.dmedia_resolver)
         self.view.connect('open', self.on_open)
         self.scroll.add(self.view)
-        self.view.get_settings().set_property('enable-developer-extras', True)
-        inspector = self.view.get_inspector()
-        inspector.connect('inspect-web-view', self.on_inspect)
+        if self.enable_inspector:
+            self.view.get_settings().set_property('enable-developer-extras', True)
+            inspector = self.view.get_inspector()
+            inspector.connect('inspect-web-view', self.on_inspect)
         splash = open(path.join(self.ui, self.splash), 'r').read()
         self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
 
     def get_page(self):
+        if self.options.page:
+            return self.options.page
+        return self.choose_starting_page()
+
+    def choose_starting_page(self):
         """
         Override to conditionally choose page to load after env is available.
 
@@ -260,6 +285,8 @@ class BaseUI(object):
         return self.page
 
     def run(self):
+        self.parse()
+        self.build_window()
         self.window.show_all()
         GObject.idle_add(self.on_idle)
         Gtk.main()
@@ -272,7 +299,7 @@ class BaseUI(object):
         Gtk.main_quit()
 
     def on_idle(self):
-        if self.benchmark:
+        if self.options.benchmark:
             Gtk.main_quit()
             return
         session.get_async(self.on_proxy, self.proxy_bus, self.proxy_path)

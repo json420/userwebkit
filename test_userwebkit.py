@@ -25,6 +25,7 @@ Unit tests for `userwebkit`.
 
 from unittest import TestCase
 import os
+from os import path
 from base64 import b32encode
 from urllib.parse import urlparse
 from random import SystemRandom
@@ -273,22 +274,35 @@ class TestCouchView(TestCase):
                 (view, 'https://launchpad.net/novacut'),  
             ]
         )
+        
+        
+class DummyOptions:
+    def __init__(self, benchmark=False, page=None):
+        self.benchmark = benchmark
+        self.page = page
 
 
 class TestBaseUI(TestCase):
     def test_init(self):
         inst = userwebkit.BaseUI()
-        self.assertFalse(inst.benchmark)
-        inst = userwebkit.BaseUI(True)
-        self.assertTrue(inst.benchmark)
+        self.assertIsNone(inst.inspector)
+        self.assertIsNone(inst.env)
+        self.assertIsInstance(inst.intree, bool)
+        self.assertTrue(path.isdir(inst.ui))
 
     def test_get_page(self):
         inst = userwebkit.BaseUI()
+        inst.options = DummyOptions()
         self.assertEqual(inst.get_page(), 'index.html')
+        inst.options = DummyOptions(page='stuff.html')
+        self.assertEqual(inst.get_page(), 'stuff.html')
 
         class UI(userwebkit.BaseUI):
             page = 'foo.html'
 
         inst = userwebkit.BaseUI()
+        inst.options = DummyOptions()
         self.assertEqual(inst.get_page(), 'index.html')
+        inst.options = DummyOptions(page='junk.html')
+        self.assertEqual(inst.get_page(), 'junk.html')
 

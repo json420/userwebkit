@@ -21,11 +21,11 @@
 # Authors:
 #   Jason Gerard DeRose <jderose@novacut.com>
 
-import optparse
 from urllib.parse import urlparse
 
 from dmedia import local
 
+import userwebkit
 from userwebkit import BaseUI
 
 
@@ -37,6 +37,7 @@ class UI(BaseUI):
     title = 'Demo'
     databases = ['demo']
     proxy_bus = 'org.freedesktop.DMedia'
+    version = userwebkit.__version__
     local = None
 
     def dmedia_resolver(self, uri):
@@ -62,20 +63,24 @@ class UI(BaseUI):
             return ''
 
 
-parser = optparse.OptionParser()
-parser.add_option('--benchmark',
-    help='benchmark app startup time',
-    action='store_true',
-    default=False,
-)
-(options, args) = parser.parse_args()
-
-
-ui = UI(options.benchmark)
-
-def on_title_data(view, obj):
-    print(obj)
-    ui.window.set_title(str(obj))
-
-ui.view.connect('title_data', on_title_data)
+ui = UI()
 ui.run()
+
+
+#parser = optparse.OptionParser()
+#parser.add_option('--benchmark',
+#    help='benchmark app startup time',
+#    action='store_true',
+#    default=False,
+#)
+#(options, args) = parser.parse_args()
+
+
+#ui = UI(options.benchmark)
+
+#def on_title_data(view, obj):
+#    print(obj)
+#    ui.window.set_title(str(obj))
+
+#ui.view.connect('title_data', on_title_data)
+#ui.run()
