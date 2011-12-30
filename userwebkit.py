@@ -198,12 +198,14 @@ class Inspector(Gtk.VBox):
         self.destroy()
 
 
-class BaseUI(object):
-    app = 'foo'
-    page = 'index.html'
+class BaseApp(object):
+    name = 'userwebkit'
+    version = None  # Your app version, eg '12.04.0'
     splash = 'splash.html'
+    page = 'index.html'
     title = 'App Window Title'
     databases = tuple()
+
     dmedia_resolver = None
     enable_inspector = True
 
@@ -213,7 +215,6 @@ class BaseUI(object):
     width = 960
     height = 540
     maximize = False
-    version = None
 
     def __init__(self):
         self.env = None
@@ -225,7 +226,7 @@ class BaseUI(object):
         setup = path.join(tree, 'setup.py')
         ui = path.join(tree, 'ui')
         self.intree = (path.isfile(setup) and path.isdir(ui))
-        self.ui = (ui if self.intree else path.join(APPS, self.app))
+        self.ui = (ui if self.intree else path.join(APPS, self.name))
 
     def parse(self):
         parser = optparse.OptionParser(
@@ -308,6 +309,9 @@ class BaseUI(object):
         self.proxy = proxy
         env = json.loads(self.proxy.GetEnv())
         self.set_env(env)
+        
+    def get_url(self, page):
+        pass
 
     def set_env(self, env):    
         self.env = env
@@ -323,7 +327,7 @@ class BaseUI(object):
                 handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
             )
         else:
-            url = '/'.join(['/_apps', self.app, self.get_page()])
+            url = '/'.join(['/_apps', self.name, self.get_page()])
         self.view.set_env(env)
         self.view.load_uri(self.server._full_url(url))
 

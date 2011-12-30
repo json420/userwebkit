@@ -26,11 +26,11 @@ from urllib.parse import urlparse
 from dmedia import local
 
 import userwebkit
-from userwebkit import BaseUI
+from userwebkit import BaseApp
 
 
 
-class UI(BaseUI):
+class App(BaseApp):
     app = 'demo'
     page = 'index.html'
     splash = 'splash.html'
@@ -63,8 +63,8 @@ class UI(BaseUI):
             return ''
 
 
-ui = UI()
-ui.run()
+app = App()
+app.run()
 
 
 #parser = optparse.OptionParser()

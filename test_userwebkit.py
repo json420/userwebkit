@@ -282,25 +282,25 @@ class DummyOptions:
         self.page = page
 
 
-class TestBaseUI(TestCase):
+class TestBaseApp(TestCase):
     def test_init(self):
-        inst = userwebkit.BaseUI()
+        inst = userwebkit.BaseApp()
         self.assertIsNone(inst.inspector)
         self.assertIsNone(inst.env)
         self.assertIsInstance(inst.intree, bool)
         self.assertTrue(path.isdir(inst.ui))
 
     def test_get_page(self):
-        inst = userwebkit.BaseUI()
+        inst = userwebkit.BaseApp()
         inst.options = DummyOptions()
         self.assertEqual(inst.get_page(), 'index.html')
         inst.options = DummyOptions(page='stuff.html')
         self.assertEqual(inst.get_page(), 'stuff.html')
 
-        class UI(userwebkit.BaseUI):
+        class UI(userwebkit.BaseApp):
             page = 'foo.html'
 
-        inst = userwebkit.BaseUI()
+        inst = userwebkit.BaseApp()
         inst.options = DummyOptions()
         self.assertEqual(inst.get_page(), 'index.html')
         inst.options = DummyOptions(page='junk.html')
