@@ -224,6 +224,9 @@ class BaseUI(object):
         self.intree = (path.isfile(setup) and path.isdir(ui))
         self.ui = (ui if self.intree else path.join(APPS, self.app))
         self.inspector = None
+        self.build_window()
+
+    def build_window(self):
         self.window = Gtk.Window()
         self.window.connect('destroy', self.quit)
         if self.maximize:
