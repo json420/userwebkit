@@ -313,6 +313,12 @@ class BaseApp(object):
         self.set_env(env)
 
     def get_url(self, page):
+        """
+        Return the URL for the HTML5 *page*.
+
+        This method takes into account whether the app is running in-tree and
+        what the current CouchDB environment is.
+        """
         if self.intree:
             url = '/_intree/' + page
         else:

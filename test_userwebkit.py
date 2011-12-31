@@ -307,14 +307,14 @@ class TestBaseApp(TestCase):
         self.assertIsNone(app.splash)
         self.assertEqual(app.page, 'index.html')
         self.assertEqual(app.databases, tuple())
-        
+
         self.assertIs(app.enable_inspector, True)
-        
+
         self.assertIsNone(app.dmedia_resolver)
-        
+
         self.assertEqual(app.proxy_bus, 'org.freedesktop.DC3')
         self.assertEqual(app.proxy_path, '/')
-        
+
         self.assertEqual(app.width, 960)
         self.assertEqual(app.height, 540)
         self.assertIs(app.maximize, False)
@@ -358,6 +358,4 @@ class TestBaseApp(TestCase):
             app.get_url('foo.html'),
             url + '_apps/supercool/foo.html'
         )
-        
-        
 
