@@ -255,6 +255,20 @@ class BaseApp(object):
 
     signals = None
 
+    # Methods that subclasses likely want to override, in order they're called:
+    def extend_parser(self, parser):
+        pass
+
+    def connect_hub_signals(self, hub):
+        pass
+
+    def post_env_init(self):
+        pass
+
+    def choose_starting_page(self):
+        return self.page
+
+
     def __init__(self):
         self.env = None
         self.inspector = None
@@ -281,9 +295,6 @@ class BaseApp(object):
         )
         self.extend_parser(parser)
         (self.options, self.args) = parser.parse_args()
-
-    def extend_parser(self, parser):
-        pass
 
     def build_window(self):
         self.window = Gtk.Window()
@@ -312,16 +323,6 @@ class BaseApp(object):
             return self.options.page
         return self.choose_starting_page()
 
-    def choose_starting_page(self):
-        """
-        Override to conditionally choose page to load after env is available.
-
-        This allows you to conditionally load say a welcome page the first time
-        an app is run.  The env will be available and your main DB will have
-        been created if it didn't already exist.
-        """
-        return self.page
-
     def run(self):
         self.parse()
         self.build_window()
@@ -333,9 +334,6 @@ class BaseApp(object):
         self.window.show_all()
         GObject.idle_add(self.on_idle)
         Gtk.main()
-
-    def connect_hub_signals(self, hub):
-        pass
 
     def quit(self, *arg):
         # FIXME: This is a work-around for the segfault we're getting when
@@ -356,7 +354,7 @@ class BaseApp(object):
         self.set_env(env)
         self.post_env_init()
         self.load_page(self.get_page())
-        
+
     def set_env(self, env):    
         self.env = env
         self.server = microfiber.Server(env)
@@ -369,9 +367,6 @@ class BaseApp(object):
         self.view.set_env(env)
         if self.inspector is not None:
             self.inspector.view.set_env(env)
-
-    def post_env_init(self):
-        pass
 
     def get_path(self, page):
         """
