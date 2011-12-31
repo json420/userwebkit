@@ -110,6 +110,14 @@ var Signal = {
     names: {},
 
     connect: function(signal, callback, self) {
+        /*
+        Connect a signal handler.
+
+        For example:
+
+        >>> Signal.connect('changed', this.on_changed, this);
+
+        */
         if (! Signal.names[signal]) {
             Signal.names[signal] = [];
         }
@@ -117,6 +125,14 @@ var Signal = {
     },
 
     send: function() {
+        /*
+        Send a signal to the Gtk side by changing document.title.
+
+        For example:
+
+        >>> Signal.send('changed', 'foo', 'bar');
+        
+        */
         var params = Array.prototype.slice.call(arguments);
         var obj = {
             i: Signal.i,
@@ -128,11 +144,29 @@ var Signal = {
     },
 
     recv: function(string) {
+        /*
+        Gtk should call this function to emit a signal to JavaScript handlers.
+        
+        For example:
+
+        >>> Signal.recv('{"signal": "changed", "args": ["foo", "bar"]}');
+
+        If you need to emit a signal from JavaScript to JavaScript handlers,
+        use Signal.emit() instead.
+        */
         var obj = JSON.parse(string);
         Signal._emit(obj.signal, obj.args);
     },
 
     emit: function() {
+        /*
+        Emit a signal from JavaScript to JavaScript handlers.
+
+        For example:
+
+        >>> Signal.emit('changed', 'foo', 'bar');
+
+        */
         var params = Array.prototype.slice.call(arguments);
         Signal._emit(params[0], params.slice(1));
     },
