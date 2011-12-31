@@ -313,21 +313,38 @@ class BaseApp(object):
         env = json.loads(self.proxy.GetEnv())
         self.set_env(env)
 
-    def get_url(self, page):
+    def get_path(self, page):
         """
-        Return the URL for the HTML5 *page*.
+        Get absolute HTTP path of *page*.
 
-        This method takes into account whether the app is running in-tree and
-        what the current CouchDB environment is.
+        This method takes into account whether the app is running in-tree.
+
+        For example, when running your app from the installed package:
+
+        >>> app = BaseApp()
+        >>> app.name = 'foo'
+        >>> app.intree = False
+        >>> app.get_path('bar.html')
+        '/_apps/foo/bar.html'
+
+        Or when running your app from inside the source tree:
+
+        >>> app.intree = True
+        >>> app.get_path('bar.html')
+        '/_intree/bar.html'
+
         """
+        assert '/' not in page
         if self.intree:
-            url = '/_intree/' + page
-        else:
-            url = '/'.join(['/_apps', self.name, page])
-        return self.server._full_url(url)
+            return '/_intree/' + page
+        return '/'.join(['/_apps', self.name, page])
 
     def load_page(self, page):
-        self.view.load_uri(self.get_url(page))
+        self.load_path(self.get_path(page))
+
+    def load_path(self, http_path):
+        assert http_path.startswith('/')
+        self.view.load_uri(self.server._full_url(http_path))
 
     def set_env(self, env):    
         self.env = env
