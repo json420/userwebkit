@@ -340,13 +340,16 @@ class TestBaseApp(TestCase):
 
         # Test when in-tree:
         app.intree = True
+        self.assertEqual(app.get_path('/_utils/'), '/_utils/')
         self.assertEqual(app.get_path('foo.html'), '/_intree/foo.html')
 
         # Test when not in-tree:
         app.intree = False
+        self.assertEqual(app.get_path('/_utils/'), '/_utils/')
         self.assertEqual(app.get_path('foo.html'), '/_apps/userwebkit/foo.html')
 
         # Test when not in-tree and name has been overridden:
         app.name = 'supercool'
+        self.assertEqual(app.get_path('/_utils/'), '/_utils/')
         self.assertEqual(app.get_path('foo.html'), '/_apps/supercool/foo.html')
 

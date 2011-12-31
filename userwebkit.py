@@ -332,19 +332,22 @@ class BaseApp(object):
         >>> app.intree = True
         >>> app.get_path('bar.html')
         '/_intree/bar.html'
+        
+        Lastly, if *page* is already an absolute HTTP path, it is returned
+        unchanged:
+        
+        >>> app.get_path('/_utils/')
+        '/_utils/'
 
         """
-        assert '/' not in page
+        if page.startswith('/'):
+            return page
         if self.intree:
             return '/_intree/' + page
         return '/'.join(['/_apps', self.name, page])
 
     def load_page(self, page):
-        self.load_path(self.get_path(page))
-
-    def load_path(self, http_path):
-        assert http_path.startswith('/')
-        self.view.load_uri(self.server._full_url(http_path))
+        self.view.load_uri(self.server._full_url(self.get_path(page)))
 
     def set_env(self, env):    
         self.env = env
