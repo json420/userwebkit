@@ -236,11 +236,11 @@ def hub_factory(signals):
 
 class BaseApp(object):
     name = 'userwebkit'  # The namespace of your app, likely source package name
+    dbname = 'userwebkit-0'  # Main CouchDB database name
     version = None  # Your app version, eg '12.04.0'
     title = 'App Window Title'  # Default Gtk.Window title
     splash = None  # Splash page to load while waiting for CouchDB
     page = 'index.html'  # Default page to load once CouchDB is available
-    databases = tuple()  # Databases to ensure exist
 
     enable_inspector = True  # If True, enable WebKit inspector
 
@@ -317,8 +317,8 @@ class BaseApp(object):
         Override to conditionally choose page to load after env is available.
 
         This allows you to conditionally load say a welcome page the first time
-        an app is run.  The env will be available and the databases listed in
-        `BaseUI.databases` will have been created.
+        an app is run.  The env will be available and your main DB will have
+        been created if it didn't already exist.
         """
         return self.page
 
@@ -393,12 +393,9 @@ class BaseApp(object):
 
     def set_env(self, env):    
         self.env = env
-        self.server = microfiber.Server(env)    
-        for name in self.databases:
-            try:
-                self.server.put(None, name)
-            except microfiber.PreconditionFailed:
-                pass
+        self.server = microfiber.Server(env)
+        self.db = microfiber.Database(self.dbname, env) 
+        self.db.ensure()
         if self.intree:
             self.server.put(
                 handler(self.ui), '_config', 'httpd_global_handlers', '_intree'

@@ -379,11 +379,11 @@ class TestBaseApp(TestCase):
 
         # Test all the default class attribute values:
         self.assertEqual(app.name, 'userwebkit')
+        self.assertEqual(app.dbname, 'userwebkit-0')
         self.assertIsNone(app.version)
         self.assertEqual(app.title, 'App Window Title')
         self.assertIsNone(app.splash)
         self.assertEqual(app.page, 'index.html')
-        self.assertEqual(app.databases, tuple())
 
         self.assertIs(app.enable_inspector, True)
 

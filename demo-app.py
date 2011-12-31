@@ -32,13 +32,15 @@ from userwebkit import BaseApp
 
 
 class App(BaseApp):
-    app = 'demo'
-    page = 'index.html'
-    splash = 'splash.html'
-    title = 'Demo'
-    databases = ['demo']
-    proxy_bus = 'org.freedesktop.DMedia'
+    name = 'demo'
+    dbname = 'demo-0'
     version = userwebkit.__version__
+    title = 'UserWebKit Demo'
+
+    splash = 'splash.html'
+    page = 'index.html'
+
+    proxy_bus = 'org.freedesktop.DMedia'
     local = None
 
     signals = {
