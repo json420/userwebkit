@@ -280,6 +280,8 @@ class BaseApp(object):
         """
         return self.page
 
+    def post_page_init(self, page):
+        pass
 
     def __init__(self):
         self.env = None
@@ -365,7 +367,9 @@ class BaseApp(object):
         env = json.loads(self.proxy.GetEnv())
         self.set_env(env)
         self.post_env_init()
-        self.load_page(self.get_page())
+        page = self.get_page()
+        self.load_page(page)
+        self.post_page_init(page)
 
     def set_env(self, env):    
         self.env = env

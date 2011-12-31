@@ -22,7 +22,6 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 from urllib.parse import urlparse
-import json
 
 from dmedia import local
 from dmedia.gtk.util import Timer
@@ -51,13 +50,13 @@ class App(BaseApp):
 
     # Method overrides, in the order they get called:
     def extend_parser(self, parser):
-        print('overrides BaseApp.extend_parser()')
+        print('App.extend_parser(<OptionParser>)')
         parser.add_option('--demo',
             help='A fun option added by overriding BaseApp.extend_parser()',
         )
 
     def connect_hub_signals(self, hub):
-        print('overrides BaseApp.connect_hub_signals()')
+        print('App.connect_hub_signals(<Hub>)')
         hub.connect('echo', self.on_echo)
         hub.connect('toggle', self.on_toggle)
 
@@ -66,11 +65,14 @@ class App(BaseApp):
         self.timer = Timer(1, self.on_timer)
 
     def post_env_init(self):
-        print('overrides BaseApp.post_env_init()')
+        print('App.post_env_init()')
 
     def choose_starting_page(self):
-        print('overrides BaseApp.choose_starting_page()')
+        print('App.choose_starting_page()')
         return self.page
+
+    def post_page_init(self, page):
+        print('App.post_page_init({!r})'.format(page))
 
     def on_echo(self, hub, count_times_two):
         self.window.set_title('echo: {}'.format(count_times_two))
