@@ -203,7 +203,6 @@ class Hub(GObject.GObject):
     def recv(self, data):
         try:
             obj = json.loads(data)
-            print(obj)
             self.emit(obj['signal'], *obj['args'])
         except ValueError:
             pass

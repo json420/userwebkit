@@ -32,6 +32,7 @@ from random import SystemRandom
 from urllib.parse import urlparse
 
 from microfiber import random_id
+from gi.repository.GObject import SIGNAL_RUN_LAST, TYPE_NONE, TYPE_PYOBJECT
 
 import userwebkit
 
@@ -109,6 +110,82 @@ class DummyResolver:
         assert len(_id) == 48
         return '/'.join(['/home/.dmedia/files', _id[:2], _id[2:]])
 
+
+class DummyCouchView:
+    def __init__(self):
+        self._scripts = []
+
+    def set_recv(self, recv):
+        assert not hasattr(self, '_recv')
+        self._recv = recv
+
+    def execute_script(self, script):
+        self._scripts.append(script)
+
+
+class TestFunctions(TestCase):
+    def test_iter_gsignals(self):
+        self.assertEqual(
+            dict(userwebkit.iter_gsignals({})), 
+            {}
+        )
+        signals = {
+            'foo': [],
+            'bar': ['one'],
+            'baz': ['one', 'two'],
+        }
+        gsignals = {
+            'foo': (SIGNAL_RUN_LAST, TYPE_NONE, []),
+            'bar': (SIGNAL_RUN_LAST, TYPE_NONE, [TYPE_PYOBJECT]),
+            'baz': (SIGNAL_RUN_LAST, TYPE_NONE, [TYPE_PYOBJECT, TYPE_PYOBJECT]),
+        }
+        self.assertEqual(
+            dict(userwebkit.iter_gsignals(signals)), 
+            gsignals
+        )
+
+    def test_hub_factory(self):
+        self.assertIs(userwebkit.hub_factory(None), userwebkit.Hub)
+        self.assertIs(userwebkit.hub_factory({}), userwebkit.Hub)
+        signals = {
+            'foo': [],
+            'bar': ['one'],
+            'baz': ['one', 'two'],
+        }
+        klass = userwebkit.hub_factory(signals)
+        self.assertIsNot(klass, userwebkit.Hub)
+        self.assertTrue(issubclass(klass, userwebkit.Hub))
+        self.assertEqual(klass.__name__, 'FactoryHub')
+
+        # Make sure we can connect to all the expected signals:
+        view = DummyCouchView()
+        hub = klass(view)
+        self.assertEqual(view._recv, hub.recv)
+        cb = DummyCallback()
+        hub.connect('foo', cb)
+        hub.connect('bar', cb)
+        hub.connect('baz', cb)
+        self.assertEqual(cb._calls, [])
+        self.assertEqual(view._scripts, [])
+ 
+        # Now test signal emit/send:
+        hub.send('foo')
+        hub.send('bar', 17)
+        hub.send('baz', True, None)
+        self.assertEqual(cb._calls,
+            [
+                (hub,),
+                (hub, 17),
+                (hub, True, None),
+            ]   
+        )
+        self.assertEqual(view._scripts,
+            [
+                'Hub.recv(\'{"signal": "foo", "args": []}\')',
+                'Hub.recv(\'{"signal": "bar", "args": [17]}\')',
+                'Hub.recv(\'{"signal": "baz", "args": [true, null]}\')',
+            ]
+        )
 
 
 class TestCouchView(TestCase):
