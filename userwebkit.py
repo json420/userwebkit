@@ -354,7 +354,24 @@ class BaseApp(object):
         self.proxy = proxy
         env = json.loads(self.proxy.GetEnv())
         self.set_env(env)
+        self.post_env_init()
         self.load_page(self.get_page())
+        
+    def set_env(self, env):    
+        self.env = env
+        self.server = microfiber.Server(env)
+        self.db = microfiber.Database(self.dbname, env) 
+        self.db.ensure()
+        if self.intree:
+            self.server.put(
+                handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
+            )
+        self.view.set_env(env)
+        if self.inspector is not None:
+            self.inspector.view.set_env(env)
+
+    def post_env_init(self):
+        pass
 
     def get_path(self, page):
         """
@@ -391,22 +408,6 @@ class BaseApp(object):
 
     def load_page(self, page):
         self.view.load_uri(self.server._full_url(self.get_path(page)))
-
-    def set_env(self, env):    
-        self.env = env
-        self.server = microfiber.Server(env)
-        self.db = microfiber.Database(self.dbname, env) 
-        self.db.ensure()
-        if self.intree:
-            self.server.put(
-                handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
-            )
-        self.view.set_env(env)
-        if self.inspector is not None:
-            self.inspector.view.set_env(env)
-
-    def post_env_init(self):
-        pass
 
     def on_inspect(self, *args):
         self.inspector = Inspector(self.env)

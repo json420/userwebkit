@@ -52,6 +52,9 @@ class App(BaseApp):
     def connect_hub_signals(self, hub):
         hub.connect('echo', self.on_echo)
         hub.connect('toggle', self.on_toggle)
+        
+    def post_env_init(self):
+        print('post_env')
 
     def on_echo(self, hub, count_times_two):
         self.window.set_title('echo: {}'.format(count_times_two))
