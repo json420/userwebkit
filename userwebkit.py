@@ -309,9 +309,16 @@ class BaseApp(object):
         self.proxy = proxy
         env = json.loads(self.proxy.GetEnv())
         self.set_env(env)
-        
+
     def get_url(self, page):
-        pass
+        if self.intree:
+            url = '/_intree/' + page
+        else:
+            url = '/'.join(['/_apps', self.name, page])
+        return self.server._full_url(url)
+
+    def load_page(self, page):
+        self.view.load_uri(self.get_url(page))
 
     def set_env(self, env):    
         self.env = env
@@ -322,14 +329,11 @@ class BaseApp(object):
             except microfiber.PreconditionFailed:
                 pass
         if self.intree:
-            url = '/_intree/' + self.get_page()
             self.server.put(
                 handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
             )
-        else:
-            url = '/'.join(['/_apps', self.name, self.get_page()])
         self.view.set_env(env)
-        self.view.load_uri(self.server._full_url(url))
+        self.load_page(self.get_page())
 
     def on_inspect(self, *args):
         self.inspector = Inspector(self.env)

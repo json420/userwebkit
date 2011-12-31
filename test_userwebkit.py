@@ -282,6 +282,16 @@ class DummyOptions:
         self.page = page
 
 
+class DummyServer:
+    def __init__(self, env):
+        u = urlparse(env['url'])
+        self.scheme = u.scheme
+        self.netloc = u.netloc
+
+    def _full_url(self, path):
+        return ''.join([self.scheme, '://', self.netloc, path])
+
+
 class TestBaseApp(TestCase):
     def test_init(self):
         inst = userwebkit.BaseApp()
@@ -305,4 +315,30 @@ class TestBaseApp(TestCase):
         self.assertEqual(inst.get_page(), 'index.html')
         inst.options = DummyOptions(page='junk.html')
         self.assertEqual(inst.get_page(), 'junk.html')
+
+    def test_get_url(self):
+        app = userwebkit.BaseApp()
+        env = random_env()
+        app.server = DummyServer(env)
+        url = env['url']
+
+        # Test when in-tree:
+        app.intree = True
+        self.assertEqual(app.get_url('foo.html'), url + '_intree/foo.html')
+
+        # Test when not in-tree:
+        app.intree = False
+        self.assertEqual(
+            app.get_url('foo.html'),
+            url + '_apps/userwebkit/foo.html'
+        )
+
+        # Test when not in-tree and name has been overridden:
+        app.name = 'supercool'
+        self.assertEqual(
+            app.get_url('foo.html'),
+            url + '_apps/supercool/foo.html'
+        )
+        
+        
 
