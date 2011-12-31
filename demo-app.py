@@ -22,8 +22,10 @@
 #   Jason Gerard DeRose <jderose@novacut.com>
 
 from urllib.parse import urlparse
+import json
 
 from dmedia import local
+from dmedia.gtk.util import Timer
 
 import userwebkit
 from userwebkit import BaseApp
@@ -61,6 +63,19 @@ class App(BaseApp):
             return 'file://' + st.name
         except Exception:    
             return ''
+
+    def on_title_data(self, view, obj):
+        self.window.set_title(json.dumps(obj, sort_keys=True))
+
+    def run(self):
+        self.count = 0
+        self.timer = Timer(1, self.on_timer)
+        self.timer.start()
+        super().run()
+
+    def on_timer(self):
+        self.send('timer', self.count)
+        self.count += 1
 
 
 app = App()

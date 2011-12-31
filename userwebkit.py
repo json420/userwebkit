@@ -295,6 +295,15 @@ class BaseApp(object):
         GObject.idle_add(self.on_idle)
         Gtk.main()
 
+    def send(self, signal, *args):
+        """
+        Emit a signal by calling the JavaScript Signal.recv() function.
+        """
+        script = 'Signal.recv({!r})'.format(
+            json.dumps({'signal': signal, 'args': args})
+        )
+        self.view.execute_script(script)
+
     def quit(self, *arg):
         # FIXME: This is a work-around for the segfault we're getting when
         # The window is destroyed before the inspector is

@@ -12,8 +12,8 @@ body {
     text-align: center;
 }
 </style>
-<script src="/_apps/dc3/couch.js"></script>
-<script src="/_apps/dc3/base.js"></script>
+<script src="couch.js"></script>
+<script src="base.js"></script>
 <script>
 "use strict"; 
 
@@ -26,36 +26,36 @@ function hello() {
     $('hello').textContent = 'Demo is talking to CouchDB ' + s.get_sync()['version'];
 }
 
-var Signal = {
-    i: 0,
-
-    emit: function() {
-        var args = Array.prototype.slice.call(arguments);
-        var obj = {
-            i: Signal.i,
-            signal: args[0],
-            args: args.slice(1),
-        };
-        Signal.i += 1;
-        document.title = JSON.stringify(obj);
-    }   
-}
-
 function click() {
     var b = $('button');
     b.classList.toggle('active');
     var active = b.classList.contains('active');
     b.textContent = active ? 'Stop' : 'Start';
-    Signal.emit('active', active);
+    Signal.send('active', active);
 }
+
+Signal.connect('timer',
+    function(count) {
+        $('timer').textContent = count;
+        Signal.emit('echo', count * 2);
+    }
+);
+
+Signal.connect('echo',
+    function(count) {
+        $('echo').textContent = count;
+    }
+);
+
 </script>
 </head>
 <body onload="hello()">
 <p id="hello"></p>
-<p>Right click and <strong>Inspect Element</strong></p>
 <p>
 <button id="button">Start</button>
 <a href="http://novacut.com/">A test link</a>
+<strong>timer:</strong> <span id="timer"></span>
+<strong>echo:</strong> <span id="echo"></span>
 </p>
 <video controls width="640" height="360" src="dmedia:TQVPUCFGL23KWPKPVDXP3BB2ZQWPTYMNDMR55QZZ5A2QLDBK">
 </body>
