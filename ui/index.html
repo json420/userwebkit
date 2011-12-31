@@ -31,7 +31,7 @@ function click() {
     b.classList.toggle('active');
     var active = b.classList.contains('active');
     b.textContent = active ? 'Stop' : 'Start';
-    Signal.send('active', active);
+    Signal.send('toggle', active);
 }
 
 Signal.connect('timer',

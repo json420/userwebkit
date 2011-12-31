@@ -28,6 +28,7 @@ from os import path
 from urllib.parse import urlparse, parse_qsl
 import json
 import optparse
+import threading
 
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
@@ -83,7 +84,6 @@ class CouchView(WebKit.WebView):
     def __init__(self, env=None, dmedia_resolver=None):
         super().__init__()
         self.connect('resource-request-starting', self._on_request)
-        self.connect('notify::title', self._on_notify_title)
         self.connect('navigation-policy-decision-requested',
             self._on_nav_policy_decision
         )
@@ -100,6 +100,10 @@ class CouchView(WebKit.WebView):
         self._u = urlparse(env['url'])
         self._oauth = env.get('oauth')
         self._basic = env.get('basic')
+
+    def set_recv(self, recv):
+        self._recv = recv
+        self.connect('notify::title', self._on_notify_title)
 
     def _on_request(self, view, frame, resource, request, response):
         if self._env is None:
@@ -163,11 +167,7 @@ class CouchView(WebKit.WebView):
         title = view.get_property('title')
         if title is None:
             return
-        try:
-            obj = json.loads(title)
-            self.emit('title_data', obj)
-        except ValueError:
-            pass
+        self._recv(title)
 
 
 class Inspector(Gtk.VBox):
@@ -198,6 +198,40 @@ class Inspector(Gtk.VBox):
         self.destroy()
 
 
+class BaseHub(GObject.GObject):
+    def __init__(self, view):
+        super().__init__()
+        self._view = view
+        view.set_recv(self.recv)
+
+    def recv(self, data):
+        try:
+            obj = json.loads(data)
+            print(obj)
+            self.emit(obj['signal'], *obj['args'])
+        except ValueError:
+            pass
+
+    def send(self, signal, *args):
+        """
+        Emit a signal by calling the JavaScript Signal.recv() function.
+        """
+        script = 'Signal.recv({!r})'.format(
+            json.dumps({'signal': signal, 'args': args})
+        )
+        self._view.execute_script(script)
+        self.emit(signal, *args)
+        
+
+
+def iter_gsignals(signals):
+    assert isinstance(signals, dict)
+    for (name, argnames) in signals.items():
+        assert isinstance(argnames, list)
+        args = [TYPE_PYOBJECT for argname in argnames]
+        yield (name, (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, args))
+
+
 class BaseApp(object):
     name = 'userwebkit'  # The namespace of your app, likely source package name
     version = None  # Your app version, eg '12.04.0'
@@ -216,6 +250,8 @@ class BaseApp(object):
     width = 960  # Default Gtk.Window width
     height = 540  # Default Gtk.Window height
     maximize = False  # If True, start with Gtk.Window maximized
+
+    signals = None
 
     def __init__(self):
         self.env = None
@@ -269,6 +305,14 @@ class BaseApp(object):
             self.view.get_settings().set_property('enable-developer-extras', True)
             inspector = self.view.get_inspector()
             inspector.connect('inspect-web-view', self.on_inspect)
+
+        if self.signals:
+            class Hub(BaseHub):
+                __gsignals__ = dict(iter_gsignals(self.signals))
+
+            self.hub = Hub(self.view)
+        else:
+            self.hub = BaseHub(self.view)
 
     def get_page(self):
         if self.options.page:

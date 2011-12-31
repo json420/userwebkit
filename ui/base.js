@@ -131,13 +131,16 @@ var Signal = {
         For example:
 
         >>> Signal.send('changed', 'foo', 'bar');
-        
+
         */
         var params = Array.prototype.slice.call(arguments);
+        var signal = params[0];
+        var args = params.slice(1);
+        Signal._emit(signal, args);
         var obj = {
-            i: Signal.i,
-            signal: params[0],
-            args: params.slice(1),
+            'i': Signal.i,
+            'signal': signal,
+            'args': args,
         };
         Signal.i += 1;
         document.title = JSON.stringify(obj);

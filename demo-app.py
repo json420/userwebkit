@@ -31,7 +31,6 @@ import userwebkit
 from userwebkit import BaseApp
 
 
-
 class App(BaseApp):
     app = 'demo'
     page = 'index.html'
@@ -41,6 +40,10 @@ class App(BaseApp):
     proxy_bus = 'org.freedesktop.DMedia'
     version = userwebkit.__version__
     local = None
+    
+    signals = {
+        'toggle': ['active'],
+    }
 
     def dmedia_resolver(self, uri):
         if self.env is None:
@@ -65,6 +68,7 @@ class App(BaseApp):
             return ''
 
     def on_title_data(self, view, obj):
+        self.hub.recv(obj['signal'], obj['args'])
         self.window.set_title(json.dumps(obj, sort_keys=True))
 
     def run(self):
