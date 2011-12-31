@@ -83,26 +83,26 @@ function $show(el) {
 }
 
 
-var Signal = {
+var Hub = {
     /*
     Relay signals between JavaScript and Gtk.
 
     For example, to send a signal to Gtk via document.title:
 
-    >>> Signal.send('click');
-    >>> Signal.send('changed', 'foo', 'bar');
+    >>> Hub.send('click');
+    >>> Hub.send('changed', 'foo', 'bar');
 
     Or from the Gtk side, send a signal to JavaScript by using
-    WebView.execute_script() to call Signal.recv() like this:
+    WebView.execute_script() to call Hub.recv() like this:
 
-    >>> Signal.recv('{"signal": "error", "args": ["oops!"]}');
+    >>> Hub.recv('{"signal": "error", "args": ["oops!"]}');
 
     Use userwebkit.BaseApp.send() as a shortcut to do the above.
 
     Lastly, to emit a signal from JavaScript to JavaScript handlers, use
-    Signal.emit() like this:
+    Hub.emit() like this:
 
-    >>> Signal.emit('changed', 'foo', 'bar');
+    >>> Hub.emit('changed', 'foo', 'bar');
 
     */
     i: 0,
@@ -115,13 +115,13 @@ var Signal = {
 
         For example:
 
-        >>> Signal.connect('changed', this.on_changed, this);
+        >>> Hub.connect('changed', this.on_changed, this);
 
         */
-        if (! Signal.names[signal]) {
-            Signal.names[signal] = [];
+        if (! Hub.names[signal]) {
+            Hub.names[signal] = [];
         }
-        Signal.names[signal].push({callback: callback, self: self});
+        Hub.names[signal].push({callback: callback, self: self});
     },
 
     send: function() {
@@ -130,35 +130,35 @@ var Signal = {
 
         For example:
 
-        >>> Signal.send('changed', 'foo', 'bar');
+        >>> Hub.send('changed', 'foo', 'bar');
 
         */
         var params = Array.prototype.slice.call(arguments);
         var signal = params[0];
         var args = params.slice(1);
-        Signal._emit(signal, args);
+        Hub._emit(signal, args);
         var obj = {
-            'i': Signal.i,
+            'i': Hub.i,
             'signal': signal,
             'args': args,
         };
-        Signal.i += 1;
+        Hub.i += 1;
         document.title = JSON.stringify(obj);
     },
 
-    recv: function(string) {
+    recv: function(data) {
         /*
         Gtk should call this function to emit a signal to JavaScript handlers.
         
         For example:
 
-        >>> Signal.recv('{"signal": "changed", "args": ["foo", "bar"]}');
+        >>> Hub.recv('{"signal": "changed", "args": ["foo", "bar"]}');
 
         If you need to emit a signal from JavaScript to JavaScript handlers,
-        use Signal.emit() instead.
+        use Hub.emit() instead.
         */
-        var obj = JSON.parse(string);
-        Signal._emit(obj.signal, obj.args);
+        var obj = JSON.parse(data);
+        Hub._emit(obj.signal, obj.args);
     },
 
     emit: function() {
@@ -167,18 +167,18 @@ var Signal = {
 
         For example:
 
-        >>> Signal.emit('changed', 'foo', 'bar');
+        >>> Hub.emit('changed', 'foo', 'bar');
 
         */
         var params = Array.prototype.slice.call(arguments);
-        Signal._emit(params[0], params.slice(1));
+        Hub._emit(params[0], params.slice(1));
     },
 
     _emit: function(signal, args) {
         /*
         Low-level private function to emit a signal to JavaScript handlers.
         */
-        var handlers = Signal.names[signal];
+        var handlers = Hub.names[signal];
         if (handlers) {
             handlers.forEach(function(h) {
                 h.callback.apply(h.self, args);

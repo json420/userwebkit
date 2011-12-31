@@ -28,7 +28,6 @@ from os import path
 from urllib.parse import urlparse, parse_qsl
 import json
 import optparse
-import threading
 
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
@@ -73,9 +72,6 @@ def handler(d):
 
 class CouchView(WebKit.WebView):
     __gsignals__ = {
-        'title_data': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
-            [TYPE_PYOBJECT]
-        ),
         'open': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
             [TYPE_PYOBJECT]
         ),
@@ -198,7 +194,7 @@ class Inspector(Gtk.VBox):
         self.destroy()
 
 
-class BaseHub(GObject.GObject):
+class Hub(GObject.GObject):
     def __init__(self, view):
         super().__init__()
         self._view = view
@@ -216,12 +212,11 @@ class BaseHub(GObject.GObject):
         """
         Emit a signal by calling the JavaScript Signal.recv() function.
         """
-        script = 'Signal.recv({!r})'.format(
+        script = 'Hub.recv({!r})'.format(
             json.dumps({'signal': signal, 'args': args})
         )
         self._view.execute_script(script)
-        self.emit(signal, *args)
-        
+        self.emit(signal, *args)        
 
 
 def iter_gsignals(signals):
@@ -230,6 +225,14 @@ def iter_gsignals(signals):
         assert isinstance(argnames, list)
         args = [TYPE_PYOBJECT for argname in argnames]
         yield (name, (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, args))
+
+
+def hub_factory(signals):
+    if signals:
+        class FactoryHub(Hub):
+            __gsignals__ = dict(iter_gsignals(signals))
+        return FactoryHub
+    return Hub
 
 
 class BaseApp(object):
@@ -298,21 +301,12 @@ class BaseApp(object):
             Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
         self.view = CouchView(None, self.dmedia_resolver)
-        self.view.connect('title_data', self.on_title_data)
         self.view.connect('open', self.on_open)
         self.scroll.add(self.view)
         if self.enable_inspector:
             self.view.get_settings().set_property('enable-developer-extras', True)
             inspector = self.view.get_inspector()
             inspector.connect('inspect-web-view', self.on_inspect)
-
-        if self.signals:
-            class Hub(BaseHub):
-                __gsignals__ = dict(iter_gsignals(self.signals))
-
-            self.hub = Hub(self.view)
-        else:
-            self.hub = BaseHub(self.view)
 
     def get_page(self):
         if self.options.page:
@@ -332,6 +326,8 @@ class BaseApp(object):
     def run(self):
         self.parse()
         self.build_window()
+        self.hub = hub_factory(self.signals)(self.view)
+        self.connect_hub_signals(self.hub)
         if self.splash:
             splash = open(path.join(self.ui, self.splash), 'r').read()
             self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
@@ -339,14 +335,8 @@ class BaseApp(object):
         GObject.idle_add(self.on_idle)
         Gtk.main()
 
-    def send(self, signal, *args):
-        """
-        Emit a signal by calling the JavaScript Signal.recv() function.
-        """
-        script = 'Signal.recv({!r})'.format(
-            json.dumps({'signal': signal, 'args': args})
-        )
-        self.view.execute_script(script)
+    def connect_hub_signals(self, hub):
+        pass
 
     def quit(self, *arg):
         # FIXME: This is a work-around for the segfault we're getting when
@@ -418,12 +408,6 @@ class BaseApp(object):
         if self.inspector is not None:
             self.inspector.view.set_env(env)
         self.load_page(self.get_page())
-
-    def on_title_data(self, view, obj):
-        """
-        Override to handle signals from JavaScript.
-        """
-        pass
 
     def on_inspect(self, *args):
         self.inspector = Inspector(self.env)

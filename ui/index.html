@@ -31,17 +31,17 @@ function click() {
     b.classList.toggle('active');
     var active = b.classList.contains('active');
     b.textContent = active ? 'Stop' : 'Start';
-    Signal.send('toggle', active);
+    Hub.send('toggle', active);
 }
 
-Signal.connect('timer',
+Hub.connect('timer',
     function(count) {
         $('timer').textContent = count;
-        Signal.emit('echo', count * 2);
+        Hub.send('echo', count * 2);
     }
 );
 
-Signal.connect('echo',
+Hub.connect('echo',
     function(count) {
         $('echo').textContent = count;
     }

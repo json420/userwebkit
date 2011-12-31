@@ -40,10 +40,25 @@ class App(BaseApp):
     proxy_bus = 'org.freedesktop.DMedia'
     version = userwebkit.__version__
     local = None
-    
+
     signals = {
         'toggle': ['active'],
+        'timer': ['count'],
+        'echo': ['count_times_two'],
     }
+
+    def connect_hub_signals(self, hub):
+        hub.connect('echo', self.on_echo)
+        hub.connect('toggle', self.on_toggle)
+
+    def on_echo(self, hub, count_times_two):
+        self.window.set_title('echo: {}'.format(count_times_two))
+
+    def on_toggle(self, hub, active):
+        if active:
+            self.timer.start()
+        else:
+            self.timer.stop()   
 
     def dmedia_resolver(self, uri):
         if self.env is None:
@@ -74,11 +89,10 @@ class App(BaseApp):
     def run(self):
         self.count = 0
         self.timer = Timer(1, self.on_timer)
-        self.timer.start()
         super().run()
 
     def on_timer(self):
-        self.send('timer', self.count)
+        self.hub.send('timer', self.count)
         self.count += 1
 
 
