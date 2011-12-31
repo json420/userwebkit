@@ -21,23 +21,71 @@
 # Authors:
 #   Jason Gerard DeRose <jderose@novacut.com>
 
-import optparse
 from urllib.parse import urlparse
 
 from dmedia import local
+from dmedia.gtk.util import Timer
 
-from userwebkit import BaseUI
+import userwebkit
+from userwebkit import BaseApp
 
 
+class App(BaseApp):
+    name = 'demo'
+    dbname = 'demo-0'
+    version = userwebkit.__version__
+    title = 'UserWebKit Demo'
 
-class UI(BaseUI):
-    app = 'demo'
-    page = 'index.html'
     splash = 'splash.html'
-    title = 'Demo'
-    databases = ['demo']
+    page = 'index.html'
+
     proxy_bus = 'org.freedesktop.DMedia'
     local = None
+
+    signals = {
+        'toggle': ['active'],
+        'timer': ['count'],
+        'echo': ['count_times_two'],
+    }
+
+    # Method overrides, in the order they get called:
+    def extend_parser(self, parser):
+        print('App.extend_parser(<OptionParser>)')
+        parser.add_option('--demo',
+            help='A fun option added by overriding BaseApp.extend_parser()',
+        )
+
+    def connect_hub_signals(self, hub):
+        print('App.connect_hub_signals(<Hub>)')
+        hub.connect('echo', self.on_echo)
+        hub.connect('toggle', self.on_toggle)
+
+        # Good a place as any to do this:
+        self.count = 0
+        self.timer = Timer(1, self.on_timer)
+
+    def post_env_init(self):
+        print('App.post_env_init()')
+
+    def choose_starting_page(self):
+        print('App.choose_starting_page()')
+        return self.page
+
+    def post_page_init(self, page):
+        print('App.post_page_init({!r})'.format(page))
+
+    def on_echo(self, hub, count_times_two):
+        self.window.set_title('echo: {}'.format(count_times_two))
+
+    def on_toggle(self, hub, active):
+        if active:
+            self.timer.start()
+        else:
+            self.timer.stop() 
+
+    def on_timer(self):
+        self.hub.send('timer', self.count)
+        self.count += 1  
 
     def dmedia_resolver(self, uri):
         if self.env is None:
@@ -62,20 +110,6 @@ class UI(BaseUI):
             return ''
 
 
-parser = optparse.OptionParser()
-parser.add_option('--benchmark',
-    help='benchmark app startup time',
-    action='store_true',
-    default=False,
-)
-(options, args) = parser.parse_args()
+app = App()
+app.run()
 
-
-ui = UI(options.benchmark)
-
-def on_title_data(view, obj):
-    print(obj)
-    ui.window.set_title(str(obj))
-
-ui.view.connect('title_data', on_title_data)
-ui.run()

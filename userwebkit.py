@@ -27,6 +27,7 @@ import sys
 from os import path
 from urllib.parse import urlparse, parse_qsl
 import json
+import optparse
 
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
@@ -71,9 +72,6 @@ def handler(d):
 
 class CouchView(WebKit.WebView):
     __gsignals__ = {
-        'title_data': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
-            [TYPE_PYOBJECT]
-        ),
         'open': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
             [TYPE_PYOBJECT]
         ),
@@ -82,7 +80,6 @@ class CouchView(WebKit.WebView):
     def __init__(self, env=None, dmedia_resolver=None):
         super().__init__()
         self.connect('resource-request-starting', self._on_request)
-        self.connect('notify::title', self._on_notify_title)
         self.connect('navigation-policy-decision-requested',
             self._on_nav_policy_decision
         )
@@ -99,6 +96,10 @@ class CouchView(WebKit.WebView):
         self._u = urlparse(env['url'])
         self._oauth = env.get('oauth')
         self._basic = env.get('basic')
+
+    def set_recv(self, recv):
+        self._recv = recv
+        self.connect('notify::title', self._on_notify_title)
 
     def _on_request(self, view, frame, resource, request, response):
         if self._env is None:
@@ -162,11 +163,7 @@ class CouchView(WebKit.WebView):
         title = view.get_property('title')
         if title is None:
             return
-        try:
-            obj = json.loads(title)
-            self.emit('title_data', obj)
-        except ValueError:
-            pass
+        self._recv(title)
 
 
 class Inspector(Gtk.VBox):
@@ -197,62 +194,98 @@ class Inspector(Gtk.VBox):
         self.destroy()
 
 
-class InspectableCouchView(Gtk.VPaned):
-    def __init__(self):
+class Hub(GObject.GObject):
+    def __init__(self, view):
         super().__init__()
-        self.env = None
-        self.inspector = None
-        self._scroll = Gtk.ScrolledWindow()
-        self.pack1(self._scroll, True, True)
-        self._scroll.set_policy(
-            Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
+        self._view = view
+        view.set_recv(self.recv)
+
+    def recv(self, data):
+        try:
+            obj = json.loads(data)
+            self.emit(obj['signal'], *obj['args'])
+        except ValueError:
+            pass
+
+    def send(self, signal, *args):
+        """
+        Emit a signal by calling the JavaScript Signal.recv() function.
+        """
+        script = 'Hub.recv({!r})'.format(
+            json.dumps({'signal': signal, 'args': args})
         )
-        self.view = CouchView()
-        self._scroll.add(self.view)
-        self.view.get_settings().set_property('enable-developer-extras', True)
-        inspector = self.view.get_inspector()
-        inspector.connect('inspect-web-view', self.on_inspect)
-
-    def set_env(self, env):
-        self.env = env
-        self.server = microfiber.Server(env)
-        self.view.set_env(env)
-
-    def on_inspect(self, *args):
-        self.inspector = Inspector(self.env)
-        pos = self.get_allocated_height() * 2 // 3
-        self.set_position(pos)
-        self.pack2(self.inspector, True, True)
-        self.inspector.show_all()
-        self.inspector.reload.connect('clicked', self.on_reload)
-        self.inspector.futon.connect('clicked', self.on_futon)
-        return self.inspector.view
-
-    def on_reload(self, button):
-        self.view.reload_bypass_cache()
-
-    def on_futon(self, button):
-        self.view.load_uri(self.server._full_url('/_utils/'))
+        self._view.execute_script(script)
+        self.emit(signal, *args)        
 
 
-class BaseUI(object):
-    app = 'foo'
-    page = 'index.html'
-    splash = 'splash.html'
-    title = 'Fix Me'
-    databases = tuple()
-    dmedia_resolver = None
+def iter_gsignals(signals):
+    assert isinstance(signals, dict)
+    for (name, argnames) in signals.items():
+        assert isinstance(argnames, list)
+        args = [TYPE_PYOBJECT for argname in argnames]
+        yield (name, (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, args))
 
-    proxy_bus = 'org.freedesktop.DC3'
+
+def hub_factory(signals):
+    if signals:
+        class FactoryHub(Hub):
+            __gsignals__ = dict(iter_gsignals(signals))
+        return FactoryHub
+    return Hub
+
+
+class BaseApp(object):
+    name = 'userwebkit'  # The namespace of your app, likely source package name
+    dbname = 'userwebkit-0'  # Main CouchDB database name
+    version = None  # Your app version, eg '12.04.0'
+    title = 'App Window Title'  # Default Gtk.Window title
+    splash = None  # Splash page to load while waiting for CouchDB
+    page = 'index.html'  # Default page to load once CouchDB is available
+
+    enable_inspector = True  # If True, enable WebKit inspector
+
+    dmedia_resolver = None  # Callback to resolve Dmedia URIs
+
+    proxy_bus = 'org.freedesktop.DC3'  # Dbus service that will start CouchDB
     proxy_path = '/'
 
-    width = 960
-    height = 540
-    maximize = False
+    width = 960  # Default Gtk.Window width
+    height = 540  # Default Gtk.Window height
+    maximize = False  # If True, start with Gtk.Window maximized
 
-    def __init__(self, benchmark=False):
-        self.benchmark = benchmark
+    signals = None
+
+    # Methods that subclasses likely want to override, in order they're called:
+    def extend_parser(self, parser):
+        """
+        Called from BaseApp.parse().
+        """
+        pass
+
+    def connect_hub_signals(self, hub):
+        """
+        Called from BaseApp.run(), after BaseApp.build_window().
+        """
+        pass
+
+    def post_env_init(self):
+        """
+        Called from BaseApp.on_proxy(), right after BaseApp.set_env().
+        """
+        pass
+
+    def choose_starting_page(self):
+        """
+        Called from BaseApp.get_page(), which is called from BaseApp.on_proxy().
+        """
+        return self.page
+
+    def post_page_init(self, page):
+        pass
+
+    def __init__(self):
         self.env = None
+        self.inspector = None
 
         # Figure out if we're running in-tree or not        
         script = path.abspath(sys.argv[0])
@@ -260,8 +293,24 @@ class BaseUI(object):
         setup = path.join(tree, 'setup.py')
         ui = path.join(tree, 'ui')
         self.intree = (path.isfile(setup) and path.isdir(ui))
-        self.ui = (ui if self.intree else path.join(APPS, self.app))
-        self.inspector = None
+        self.ui = (ui if self.intree else path.join(APPS, self.name))
+
+    def parse(self):
+        parser = optparse.OptionParser(
+            version=self.version,
+        )
+        parser.add_option('--benchmark',
+            help='benchmark app startup time',
+            action='store_true',
+            default=False,
+        )
+        parser.add_option('--page',
+            help='force UI to load specific HTML5 page, eg "foo.html"',
+        )
+        self.extend_parser(parser)
+        (self.options, self.args) = parser.parse_args()
+
+    def build_window(self):
         self.window = Gtk.Window()
         self.window.connect('destroy', self.quit)
         if self.maximize:
@@ -278,13 +327,24 @@ class BaseUI(object):
         self.view = CouchView(None, self.dmedia_resolver)
         self.view.connect('open', self.on_open)
         self.scroll.add(self.view)
-        self.view.get_settings().set_property('enable-developer-extras', True)
-        inspector = self.view.get_inspector()
-        inspector.connect('inspect-web-view', self.on_inspect)
-        splash = open(path.join(self.ui, self.splash), 'r').read()
-        self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
+        if self.enable_inspector:
+            self.view.get_settings().set_property('enable-developer-extras', True)
+            inspector = self.view.get_inspector()
+            inspector.connect('inspect-web-view', self.on_inspect)
+
+    def get_page(self):
+        if self.options.page:
+            return self.options.page
+        return self.choose_starting_page()
 
     def run(self):
+        self.parse()
+        self.build_window()
+        self.hub = hub_factory(self.signals)(self.view)
+        self.connect_hub_signals(self.hub)
+        if self.splash:
+            splash = open(path.join(self.ui, self.splash), 'r').read()
+            self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
         self.window.show_all()
         GObject.idle_add(self.on_idle)
         Gtk.main()
@@ -297,7 +357,7 @@ class BaseUI(object):
         Gtk.main_quit()
 
     def on_idle(self):
-        if self.benchmark:
+        if self.options.benchmark:
             Gtk.main_quit()
             return
         session.get_async(self.on_proxy, self.proxy_bus, self.proxy_path)
@@ -306,24 +366,59 @@ class BaseUI(object):
         self.proxy = proxy
         env = json.loads(self.proxy.GetEnv())
         self.set_env(env)
+        self.post_env_init()
+        page = self.get_page()
+        self.load_page(page)
+        self.post_page_init(page)
 
     def set_env(self, env):    
         self.env = env
-        self.server = microfiber.Server(env)    
-        for name in self.databases:
-            try:
-                self.server.put(None, name)
-            except microfiber.PreconditionFailed:
-                pass
+        self.server = microfiber.Server(env)
+        self.db = microfiber.Database(self.dbname, env) 
+        self.db.ensure()
         if self.intree:
-            url = '/_intree/' + self.page
             self.server.put(
                 handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
             )
-        else:
-            url = '/'.join(['/_apps', self.app, self.page])
         self.view.set_env(env)
-        self.view.load_uri(self.server._full_url(url))
+        if self.inspector is not None:
+            self.inspector.view.set_env(env)
+
+    def get_path(self, page):
+        """
+        Get absolute HTTP path of *page*.
+
+        This method takes into account whether the app is running in-tree.
+
+        For example, when running your app from the installed package:
+
+        >>> app = BaseApp()
+        >>> app.name = 'foo'
+        >>> app.intree = False
+        >>> app.get_path('bar.html')
+        '/_apps/foo/bar.html'
+
+        Or when running your app from inside the source tree:
+
+        >>> app.intree = True
+        >>> app.get_path('bar.html')
+        '/_intree/bar.html'
+        
+        Lastly, if *page* is already an absolute HTTP path, it is returned
+        unchanged:
+        
+        >>> app.get_path('/_utils/')
+        '/_utils/'
+
+        """
+        if page.startswith('/'):
+            return page
+        if self.intree:
+            return '/_intree/' + page
+        return '/'.join(['/_apps', self.name, page])
+
+    def load_page(self, page):
+        self.view.load_uri(self.server._full_url(self.get_path(page)))
 
     def on_inspect(self, *args):
         self.inspector = Inspector(self.env)
@@ -339,7 +434,7 @@ class BaseUI(object):
         self.view.reload_bypass_cache()
 
     def on_futon(self, button):
-        self.view.load_uri(self.server._full_url('/_utils/'))
+        self.load_page('/_utils/')
 
     def on_open(self, view, uri):
         import subprocess

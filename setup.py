@@ -29,6 +29,8 @@ from distutils.core import setup
 from distutils.cmd import Command
 from unittest import TestLoader, TextTestRunner
 from doctest import DocTestSuite
+import os
+from os import path
 
 
 class Test(Command):
@@ -73,4 +75,9 @@ setup(
         'test': Test,
         #'build': build_with_docs,
     },
+    data_files=[
+        ('share/couchdb/apps/userwebkit',
+            [path.join('ui', name) for name in os.listdir('ui')]
+        ),
+    ],
 )

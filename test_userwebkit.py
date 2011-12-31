@@ -25,12 +25,16 @@ Unit tests for `userwebkit`.
 
 from unittest import TestCase
 import os
+from os import path
 from base64 import b32encode
 from urllib.parse import urlparse
 from random import SystemRandom
 from urllib.parse import urlparse
 
+import microfiber
 from microfiber import random_id
+from usercouch.misc import CouchTestCase
+from gi.repository.GObject import SIGNAL_RUN_LAST, TYPE_NONE, TYPE_PYOBJECT
 
 import userwebkit
 
@@ -108,6 +112,86 @@ class DummyResolver:
         assert len(_id) == 48
         return '/'.join(['/home/.dmedia/files', _id[:2], _id[2:]])
 
+
+class DummyCouchView:
+    def __init__(self):
+        self._scripts = []
+
+    def set_env(self, env):
+        assert not hasattr(self, '_env')
+        self._env = env
+
+    def set_recv(self, recv):
+        assert not hasattr(self, '_recv')
+        self._recv = recv
+
+    def execute_script(self, script):
+        self._scripts.append(script)
+
+
+class TestFunctions(TestCase):
+    def test_iter_gsignals(self):
+        self.assertEqual(
+            dict(userwebkit.iter_gsignals({})), 
+            {}
+        )
+        signals = {
+            'foo': [],
+            'bar': ['one'],
+            'baz': ['one', 'two'],
+        }
+        gsignals = {
+            'foo': (SIGNAL_RUN_LAST, TYPE_NONE, []),
+            'bar': (SIGNAL_RUN_LAST, TYPE_NONE, [TYPE_PYOBJECT]),
+            'baz': (SIGNAL_RUN_LAST, TYPE_NONE, [TYPE_PYOBJECT, TYPE_PYOBJECT]),
+        }
+        self.assertEqual(
+            dict(userwebkit.iter_gsignals(signals)), 
+            gsignals
+        )
+
+    def test_hub_factory(self):
+        self.assertIs(userwebkit.hub_factory(None), userwebkit.Hub)
+        self.assertIs(userwebkit.hub_factory({}), userwebkit.Hub)
+        signals = {
+            'foo': [],
+            'bar': ['one'],
+            'baz': ['one', 'two'],
+        }
+        klass = userwebkit.hub_factory(signals)
+        self.assertIsNot(klass, userwebkit.Hub)
+        self.assertTrue(issubclass(klass, userwebkit.Hub))
+        self.assertEqual(klass.__name__, 'FactoryHub')
+
+        # Make sure we can connect to all the expected signals:
+        view = DummyCouchView()
+        hub = klass(view)
+        self.assertEqual(view._recv, hub.recv)
+        cb = DummyCallback()
+        hub.connect('foo', cb)
+        hub.connect('bar', cb)
+        hub.connect('baz', cb)
+        self.assertEqual(cb._calls, [])
+        self.assertEqual(view._scripts, [])
+ 
+        # Now test signal emit/send:
+        hub.send('foo')
+        hub.send('bar', 17)
+        hub.send('baz', True, None)
+        self.assertEqual(cb._calls,
+            [
+                (hub,),
+                (hub, 17),
+                (hub, True, None),
+            ]   
+        )
+        self.assertEqual(view._scripts,
+            [
+                'Hub.recv(\'{"signal": "foo", "args": []}\')',
+                'Hub.recv(\'{"signal": "bar", "args": [17]}\')',
+                'Hub.recv(\'{"signal": "baz", "args": [true, null]}\')',
+            ]
+        )
 
 
 class TestCouchView(TestCase):
@@ -273,4 +357,102 @@ class TestCouchView(TestCase):
                 (view, 'https://launchpad.net/novacut'),  
             ]
         )
+        
+        
+class DummyOptions:
+    def __init__(self, benchmark=False, page=None):
+        self.benchmark = benchmark
+        self.page = page
+
+
+class DummyServer:
+    def __init__(self, env):
+        u = urlparse(env['url'])
+        self.scheme = u.scheme
+        self.netloc = u.netloc
+
+    def _full_url(self, path):
+        return ''.join([self.scheme, '://', self.netloc, path])
+
+
+class TestBaseApp(TestCase):
+    def test_init(self):
+        app = userwebkit.BaseApp()
+        self.assertIsNone(app.inspector)
+        self.assertIsNone(app.env)
+        self.assertIsInstance(app.intree, bool)
+        self.assertTrue(path.isdir(app.ui))
+
+        # Test all the default class attribute values:
+        self.assertEqual(app.name, 'userwebkit')
+        self.assertEqual(app.dbname, 'userwebkit-0')
+        self.assertIsNone(app.version)
+        self.assertEqual(app.title, 'App Window Title')
+        self.assertIsNone(app.splash)
+        self.assertEqual(app.page, 'index.html')
+
+        self.assertIs(app.enable_inspector, True)
+
+        self.assertIsNone(app.dmedia_resolver)
+
+        self.assertEqual(app.proxy_bus, 'org.freedesktop.DC3')
+        self.assertEqual(app.proxy_path, '/')
+
+        self.assertEqual(app.width, 960)
+        self.assertEqual(app.height, 540)
+        self.assertIs(app.maximize, False)
+
+    def test_get_page(self):
+        inst = userwebkit.BaseApp()
+        inst.options = DummyOptions()
+        self.assertEqual(inst.get_page(), 'index.html')
+        inst.options = DummyOptions(page='stuff.html')
+        self.assertEqual(inst.get_page(), 'stuff.html')
+
+        class UI(userwebkit.BaseApp):
+            page = 'foo.html'
+
+        inst = userwebkit.BaseApp()
+        inst.options = DummyOptions()
+        self.assertEqual(inst.get_page(), 'index.html')
+        inst.options = DummyOptions(page='junk.html')
+        self.assertEqual(inst.get_page(), 'junk.html')
+
+    def test_get_path(self):
+        app = userwebkit.BaseApp()
+
+        # Test when in-tree:
+        app.intree = True
+        self.assertEqual(app.get_path('/_utils/'), '/_utils/')
+        self.assertEqual(app.get_path('foo.html'), '/_intree/foo.html')
+
+        # Test when not in-tree:
+        app.intree = False
+        self.assertEqual(app.get_path('/_utils/'), '/_utils/')
+        self.assertEqual(app.get_path('foo.html'), '/_apps/userwebkit/foo.html')
+
+        # Test when not in-tree and name has been overridden:
+        app.name = 'supercool'
+        self.assertEqual(app.get_path('/_utils/'), '/_utils/')
+        self.assertEqual(app.get_path('foo.html'), '/_apps/supercool/foo.html')
+
+
+class TestBaseAppLive(CouchTestCase):
+    def test_set_env(self):
+        app = userwebkit.BaseApp()
+        app.view = DummyCouchView()
+        self.assertIsNone(app.env)
+        app.set_env(self.env)
+        self.assertIs(app.env, self.env)
+        self.assertIs(app.view._env, self.env)
+        self.assertIsInstance(app.server, microfiber.Server)
+        self.assertIsInstance(app.db, microfiber.Database)
+        self.assertEqual(app.db.get()['db_name'], 'userwebkit-0')
+        if app.intree:
+            self.assertEqual(
+                app.server.get('_config', 'httpd_global_handlers', '_intree'),
+                userwebkit.handler(app.ui)
+            )
+        
+        
 

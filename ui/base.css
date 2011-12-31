@@ -1,0 +1,13 @@
+body {
+    font-family: Ubuntu, sans-sarif;
+    font-size: 16px;
+}
+
+code, pre {
+    font-family: 'Ubuntu Mono', monospace;
+    font-size: 18px;
+}
+
+.hide {
+    display: none !important;
+}
