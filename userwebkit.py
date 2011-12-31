@@ -202,7 +202,7 @@ class BaseApp(object):
     name = 'userwebkit'  # The namespace of your app, likely source package name
     version = None  # Your app version, eg '12.04.0'
     title = 'App Window Title'  # Default Gtk.Window title
-    splash = 'splash.html'  # Splash page to load while waiting for CouchDB
+    splash = None  # Splash page to load while waiting for CouchDB
     page = 'index.html'  # Default page to load once CouchDB is available
     databases = tuple()  # Databases to ensure exist
 

@@ -294,11 +294,30 @@ class DummyServer:
 
 class TestBaseApp(TestCase):
     def test_init(self):
-        inst = userwebkit.BaseApp()
-        self.assertIsNone(inst.inspector)
-        self.assertIsNone(inst.env)
-        self.assertIsInstance(inst.intree, bool)
-        self.assertTrue(path.isdir(inst.ui))
+        app = userwebkit.BaseApp()
+        self.assertIsNone(app.inspector)
+        self.assertIsNone(app.env)
+        self.assertIsInstance(app.intree, bool)
+        self.assertTrue(path.isdir(app.ui))
+
+        # Test all the default class attribute values:
+        self.assertEqual(app.name, 'userwebkit')
+        self.assertIsNone(app.version)
+        self.assertEqual(app.title, 'App Window Title')
+        self.assertIsNone(app.splash)
+        self.assertEqual(app.page, 'index.html')
+        self.assertEqual(app.databases, tuple())
+        
+        self.assertIs(app.enable_inspector, True)
+        
+        self.assertIsNone(app.dmedia_resolver)
+        
+        self.assertEqual(app.proxy_bus, 'org.freedesktop.DC3')
+        self.assertEqual(app.proxy_path, '/')
+        
+        self.assertEqual(app.width, 960)
+        self.assertEqual(app.height, 540)
+        self.assertIs(app.maximize, False)
 
     def test_get_page(self):
         inst = userwebkit.BaseApp()
