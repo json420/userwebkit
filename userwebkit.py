@@ -386,7 +386,7 @@ class BaseApp(object):
         self.view.reload_bypass_cache()
 
     def on_futon(self, button):
-        self.view.load_uri(self.server._full_url('/_utils/'))
+        self.load_page('/_utils/')
 
     def on_open(self, view, uri):
         import subprocess
