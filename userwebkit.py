@@ -262,6 +262,7 @@ class BaseApp(object):
             Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
         self.view = CouchView(None, self.dmedia_resolver)
+        self.view.connect('title_data', self.on_title_data)
         self.view.connect('open', self.on_open)
         self.scroll.add(self.view)
         if self.enable_inspector:
@@ -344,6 +345,12 @@ class BaseApp(object):
         if self.inspector is not None:
             self.inspector.view.set_env(env)
         self.load_page(self.get_page())
+
+    def on_title_data(self, view, obj):
+        """
+        Override to handle signals from JavaScript.
+        """
+        pass
 
     def on_inspect(self, *args):
         self.inspector = Inspector(self.env)
