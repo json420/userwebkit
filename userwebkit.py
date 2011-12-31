@@ -354,6 +354,7 @@ class BaseApp(object):
         self.proxy = proxy
         env = json.loads(self.proxy.GetEnv())
         self.set_env(env)
+        self.load_page(self.get_page())
 
     def get_path(self, page):
         """
@@ -403,7 +404,9 @@ class BaseApp(object):
         self.view.set_env(env)
         if self.inspector is not None:
             self.inspector.view.set_env(env)
-        self.load_page(self.get_page())
+
+    def post_env_init(self):
+        pass
 
     def on_inspect(self, *args):
         self.inspector = Inspector(self.env)

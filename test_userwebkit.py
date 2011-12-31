@@ -31,7 +31,9 @@ from urllib.parse import urlparse
 from random import SystemRandom
 from urllib.parse import urlparse
 
+import microfiber
 from microfiber import random_id
+from usercouch.misc import CouchTestCase
 from gi.repository.GObject import SIGNAL_RUN_LAST, TYPE_NONE, TYPE_PYOBJECT
 
 import userwebkit
@@ -114,6 +116,10 @@ class DummyResolver:
 class DummyCouchView:
     def __init__(self):
         self._scripts = []
+
+    def set_env(self, env):
+        assert not hasattr(self, '_env')
+        self._env = env
 
     def set_recv(self, recv):
         assert not hasattr(self, '_recv')
@@ -429,4 +435,24 @@ class TestBaseApp(TestCase):
         app.name = 'supercool'
         self.assertEqual(app.get_path('/_utils/'), '/_utils/')
         self.assertEqual(app.get_path('foo.html'), '/_apps/supercool/foo.html')
+
+
+class TestBaseAppLive(CouchTestCase):
+    def test_set_env(self):
+        app = userwebkit.BaseApp()
+        app.view = DummyCouchView()
+        self.assertIsNone(app.env)
+        app.set_env(self.env)
+        self.assertIs(app.env, self.env)
+        self.assertIs(app.view._env, self.env)
+        self.assertIsInstance(app.server, microfiber.Server)
+        self.assertIsInstance(app.db, microfiber.Database)
+        self.assertEqual(app.db.get()['db_name'], 'userwebkit-0')
+        if app.intree:
+            self.assertEqual(
+                app.server.get('_config', 'httpd_global_handlers', '_intree'),
+                userwebkit.handler(app.ui)
+            )
+        
+        
 
