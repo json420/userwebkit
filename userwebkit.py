@@ -287,8 +287,9 @@ class BaseApp(object):
     def run(self):
         self.parse()
         self.build_window()
-        splash = open(path.join(self.ui, self.splash), 'r').read()
-        self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
+        if self.splash:
+            splash = open(path.join(self.ui, self.splash), 'r').read()
+            self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
         self.window.show_all()
         GObject.idle_add(self.on_idle)
         Gtk.main()
@@ -334,6 +335,8 @@ class BaseApp(object):
                 handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
             )
         self.view.set_env(env)
+        if self.inspector is not None:
+            self.inspector.view.set_env(env)
         self.load_page(self.get_page())
 
     def on_inspect(self, *args):
