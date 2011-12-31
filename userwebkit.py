@@ -257,15 +257,27 @@ class BaseApp(object):
 
     # Methods that subclasses likely want to override, in order they're called:
     def extend_parser(self, parser):
+        """
+        Called from BaseApp.parse().
+        """
         pass
 
     def connect_hub_signals(self, hub):
+        """
+        Called from BaseApp.run(), after BaseApp.build_window().
+        """
         pass
 
     def post_env_init(self):
+        """
+        Called from BaseApp.on_proxy(), right after BaseApp.set_env().
+        """
         pass
 
     def choose_starting_page(self):
+        """
+        Called from BaseApp.get_page(), which is called from BaseApp.on_proxy().
+        """
         return self.page
 
 

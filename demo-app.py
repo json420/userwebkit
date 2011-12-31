@@ -49,12 +49,28 @@ class App(BaseApp):
         'echo': ['count_times_two'],
     }
 
+    # Method overrides, in the order they get called:
+    def extend_parser(self, parser):
+        print('overrides BaseApp.extend_parser()')
+        parser.add_option('--demo',
+            help='A fun option added by overriding BaseApp.extend_parser()',
+        )
+
     def connect_hub_signals(self, hub):
+        print('overrides BaseApp.connect_hub_signals()')
         hub.connect('echo', self.on_echo)
         hub.connect('toggle', self.on_toggle)
-        
+
+        # Good a place as any to do this:
+        self.count = 0
+        self.timer = Timer(1, self.on_timer)
+
     def post_env_init(self):
-        print('post_env')
+        print('overrides BaseApp.post_env_init()')
+
+    def choose_starting_page(self):
+        print('overrides BaseApp.choose_starting_page()')
+        return self.page
 
     def on_echo(self, hub, count_times_two):
         self.window.set_title('echo: {}'.format(count_times_two))
@@ -63,7 +79,11 @@ class App(BaseApp):
         if active:
             self.timer.start()
         else:
-            self.timer.stop()   
+            self.timer.stop() 
+
+    def on_timer(self):
+        self.hub.send('timer', self.count)
+        self.count += 1  
 
     def dmedia_resolver(self, uri):
         if self.env is None:
@@ -87,38 +107,7 @@ class App(BaseApp):
         except Exception:    
             return ''
 
-    def on_title_data(self, view, obj):
-        self.hub.recv(obj['signal'], obj['args'])
-        self.window.set_title(json.dumps(obj, sort_keys=True))
-
-    def run(self):
-        self.count = 0
-        self.timer = Timer(1, self.on_timer)
-        super().run()
-
-    def on_timer(self):
-        self.hub.send('timer', self.count)
-        self.count += 1
-
 
 app = App()
 app.run()
 
-
-#parser = optparse.OptionParser()
-#parser.add_option('--benchmark',
-#    help='benchmark app startup time',
-#    action='store_true',
-#    default=False,
-#)
-#(options, args) = parser.parse_args()
-
-
-#ui = UI(options.benchmark)
-
-#def on_title_data(view, obj):
-#    print(obj)
-#    ui.window.set_title(str(obj))
-
-#ui.view.connect('title_data', on_title_data)
-#ui.run()
