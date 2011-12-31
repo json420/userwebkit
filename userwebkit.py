@@ -199,22 +199,23 @@ class Inspector(Gtk.VBox):
 
 
 class BaseApp(object):
-    name = 'userwebkit'
+    name = 'userwebkit'  # The namespace of your app, likely source package name
     version = None  # Your app version, eg '12.04.0'
-    splash = 'splash.html'
-    page = 'index.html'
-    title = 'App Window Title'
-    databases = tuple()
+    title = 'App Window Title'  # Default Gtk.Window title
+    splash = 'splash.html'  # Splash page to load while waiting for CouchDB
+    page = 'index.html'  # Default page to load once CouchDB is available
+    databases = tuple()  # Databases to ensure exist
 
-    dmedia_resolver = None
-    enable_inspector = True
+    enable_inspector = True  # If True, enable WebKit inspector
 
-    proxy_bus = 'org.freedesktop.DC3'
+    dmedia_resolver = None  # Callback to resolve Dmedia URIs
+
+    proxy_bus = 'org.freedesktop.DC3'  # Dbus service that will start CouchDB
     proxy_path = '/'
 
-    width = 960
-    height = 540
-    maximize = False
+    width = 960  # Default Gtk.Window width
+    height = 540  # Default Gtk.Window height
+    maximize = False  # If True, start with Gtk.Window maximized
 
     def __init__(self):
         self.env = None
@@ -267,8 +268,6 @@ class BaseApp(object):
             self.view.get_settings().set_property('enable-developer-extras', True)
             inspector = self.view.get_inspector()
             inspector.connect('inspect-web-view', self.on_inspect)
-        splash = open(path.join(self.ui, self.splash), 'r').read()
-        self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
 
     def get_page(self):
         if self.options.page:
@@ -288,6 +287,8 @@ class BaseApp(object):
     def run(self):
         self.parse()
         self.build_window()
+        splash = open(path.join(self.ui, self.splash), 'r').read()
+        self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
         self.window.show_all()
         GObject.idle_add(self.on_idle)
         Gtk.main()
