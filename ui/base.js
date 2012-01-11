@@ -73,13 +73,95 @@ function $replace(incumbent, replacement) {
 }
 
 
-function $hide(el) {
-    $(el).classList.add('hide');
+function $hide(id) {
+    var element = $(id);
+    if (element) {
+        element.classList.add('hide');
+        return element;
+    }
 }
 
 
-function $show(el) {
-    $(el).classList.remove('hide');
+function $show(id) {
+    var element = $(id);
+    if (element) {
+        element.classList.remove('hide');
+        return element;
+    }
+}
+
+
+function $select(id) {
+    var element = $(id);
+    if (element) {
+        element.classList.add('selected');
+        return element;
+    }
+}
+
+
+function $unselect(id) {
+    var element = $(id);
+    if (element) {
+        element.classList.remove('selected');
+        return element;
+    }
+}
+
+
+function time() {
+    /* Return Unix-style timestamp like time.time() */
+    return Date.now() / 1000;
+}
+
+
+function bytes10(size) {
+    /*
+    Return *size* bytes to 3 significant digits in SI base-10 units.
+
+    For example:
+    >>> bytes10(1000);
+    "1 kB"
+    >>> bytes10(29481537)
+    "29.5 MB"
+    >>> bytes10(392012353)
+    "392 MB"
+
+    For additional details, see:
+
+        https://wiki.ubuntu.com/UnitsPolicy
+    */
+    var BYTES10 = [
+        'bytes',
+        'kB',
+        'MB',
+        'GB',
+        'TB',
+        'PB',
+        'EB',
+        'ZB',
+        'YB',
+    ];
+    if (size == 0) {
+        return '0 bytes';
+    }
+    if (size == 1) {
+        return '1 byte';
+    }
+    var ex = Math.floor(Math.log(size) / Math.log(1000));
+    var i = Math.min(ex, BYTES10.length - 1);
+    var s = ((i > 0) ? size / Math.pow(1000, i) : size).toPrecision(3);
+    if (s.indexOf('.') > 0) {
+        var end = s.slice(-1);
+        while (end == '0' || end == '.') {
+            s = s.slice(0, -1);
+            if (end == '.') {
+                break;
+            }
+            end = s.slice(-1);
+        }
+    }
+    return s + ' ' + BYTES10[i];
 }
 
 
