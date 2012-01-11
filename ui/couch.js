@@ -37,7 +37,33 @@ Examples:
 
 "use strict";
 
-var couch = {};
+
+var couch = {
+    B32ALPHABET: '234567ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+
+    time: function() {
+        /* Return Unix-style timestamp like time.time() */
+        return Date.now() / 1000;
+    },
+
+    random_b32: function() {
+        return couch.B32ALPHABET[Math.floor(Math.random() * 32)];
+    },
+
+    random_id: function(count) {    
+        count = count || 24;
+        var letters = [];
+        var i;
+        for (i=0; i<count; i++) {
+            letters.push(couch.random_b32());
+        }
+        return letters.join('');
+    },
+
+    random_id2: function() {
+        return [Math.floor(couch.time()), couch.random_id(16)].join('-');
+    },
+}
 
 
 couch.errors = {
@@ -184,11 +210,7 @@ couch.CouchBase.prototype = {
             var url = this.basepath + parts.join('/');
         }
         if (options) {
-            var keys = [];
-            var key;
-            for (key in options) {
-                keys.push(key);
-            }
+            var keys = Object.keys(options);
             if (keys.length == 0) {
                 return url;
             }
@@ -428,12 +450,11 @@ couch.Session = function(db, callback) {
     this.docs = {};
     this.dirty = {};
     this.s = new couch.Server(this.db.url);
-    this.session_id = this.s.get('_uuids', {count: 1}).uuids[0];
-    console.log(this.session_id);
+    this.session_id = couch.random_id2();
 }
 couch.Session.prototype = {
     start: function() {
-        var r = this.db.get('_all_docs', {include_docs: true});
+        var r = this.db.get_sync('_all_docs', {include_docs: true});
         r.rows.forEach(function(row) {
             var doc = row.doc;
             this.docs[doc._id] = doc;
@@ -442,7 +463,7 @@ couch.Session.prototype = {
         var callback = function(r) {
             self.on_changes(r);
         }
-        var since = this.db.get().update_seq;
+        var since = this.db.get_sync().update_seq;
         this.monitor = this.db.monitor_changes(callback, since);
     },
 
