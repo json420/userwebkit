@@ -9,6 +9,14 @@ Note that couch.js should never depend on anything in here.
 */
 
 
+function $bind(func, self) {
+    return function() {
+        var args = Array.prototype.slice.call(arguments);
+        return func.apply(self, args);
+    }
+}
+
+
 function $(id) {
     /*
     Return the element with id="id".

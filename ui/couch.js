@@ -142,6 +142,11 @@ couch.CouchRequest.prototype = {
         }
         return this.req.responseText;
     },
+
+    abort: function() {
+        this.req.abort();
+        this.req = null;
+    },
 }
 
 
