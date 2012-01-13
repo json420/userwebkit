@@ -421,17 +421,26 @@ couch.Database.prototype = {
     att_url: function(doc_or_id, name) {
         /*
         Return URL of a document's attachmnet.
-        
+
         Examples:
-        
+
         >>> var db = new couch.Database('dmedia');
         undefined
         >>> db.att_url({'_id': 'foo'}, 'thumbnail');
         "/dmedia/foo/thumbnail"
         >>> db.att_url('foo', 'thumbnail');
         "/dmedia/foo/thumbnail"
-        
+
+        The *name* argument defaults to 'thumbnail' if not provided:
+
+        >>> db.att_url('bar');
+        "/dmedia/bar/thumbnail"
+
+        >>> db.att_url('bar', 'other');
+        "/dmedia/bar/other"
+
         */
+        name = name || 'thumbnail';
         if (doc_or_id instanceof Object) {
             var _id = doc_or_id['_id'];
         }
@@ -439,6 +448,27 @@ couch.Database.prototype = {
             var _id = doc_or_id;
         }
         return this.path([_id, name]);
+    },
+
+    att_css_url: function(doc_or_id, name) {
+        /*
+        
+        Return an attachment URL formatted to be used in CSS.
+
+        For example:
+
+        >>> var db = new couch.Database('foo');
+        >>> db.att_css_url('bar', 'baz');
+        'url("/foo/bar/baz")'
+
+        The *name* argument defaults to 'thumbnail' if not provided:
+
+        >>> db.att_css_url('bar');
+        'url("/foo/bar/thumbnail")'
+
+        */
+        var url = this.att_url(doc_or_id, name);
+        return ['url(', JSON.stringify(url), ')'].join('');
     },
 
     monitor_changes: function(callback, since) {
