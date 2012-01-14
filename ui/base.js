@@ -81,6 +81,19 @@ function $replace(incumbent, replacement) {
 }
 
 
+function $prepend(child, parent) {
+    /*
+    Insert *child* as the first child element in *parent*.
+ 
+    */
+    var first = parent.children[0];
+    if (first) {
+        return parent.insertBefore(child, first);
+    }
+    return parent.appendChild(child);
+}
+
+
 function $hide(id) {
     var element = $(id);
     if (element) {
