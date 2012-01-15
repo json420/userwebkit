@@ -94,6 +94,24 @@ function $prepend(child, parent) {
 }
 
 
+function $scroll_to(id) {
+    var child = $(id);
+    if (! (child && child.parentNode)) {
+        return;
+    }
+    var start = child.offsetTop;
+    var end = start + child.offsetHeight;
+    var vis_start = child.parentNode.scrollTop;
+    var vis_end = vis_start + child.parentNode.clientHeight;
+    if (start < vis_start) {
+        child.parentNode.scrollTop = start;
+    }
+    else if (end > vis_end) {
+        child.parentNode.scrollTop = end - child.parentNode.clientHeight;
+    }
+}
+
+
 function $hide(id) {
     var element = $(id);
     if (element) {
