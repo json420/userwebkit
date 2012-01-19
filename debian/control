@@ -15,8 +15,8 @@ Homepage: https://launchpad.net/userwebkit
 Package: python3-userwebkit
 Architecture: all
 Depends: ${misc:Depends}, python3 (>= 3.2),
-    python3-microfiber (>= 11.12),
-    dc3 (>= 11.12),
+    python3-microfiber (>= 12.01),
+    python3-usercouch (>= 12.01) | dc3 (>= 12.01),
     python3-gobject,
     gir1.2-gtk-3.0,
     gir1.2-webkit-3.0,
