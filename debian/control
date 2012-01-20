@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Jason Gerard DeRose <jderose@novacut.com>
 Build-Depends: debhelper (>= 8.9), python3 (>= 3.2),
     python3-microfiber (>= 11.12),
-    python3-gobject,
+    python3-gi | python3-gobject,
     gir1.2-gtk-3.0,
     gir1.2-webkit-3.0,
 Standards-Version: 3.9.2
