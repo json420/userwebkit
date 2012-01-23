@@ -37,7 +37,7 @@ from gi.repository.GObject import TYPE_PYOBJECT
 
 GObject.threads_init()
 
-__version__ = '12.01.0'
+__version__ = '12.02.0'
 APPS = '/usr/share/couchdb/apps/'
 
 

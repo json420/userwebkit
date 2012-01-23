@@ -1,5 +1,5 @@
-userwebkit (12.01.0-0~precise) precise; urgency=low
+userwebkit (12.02.0-0~precise) precise; urgency=low
 
-  * Upstream 12.01.0 pre-release
+  * Upstream 12.02.0 pre-release
 
- -- Jason Gerard DeRose <jderose@novacut.com>  Tue, 27 Dec 2011 06:45:01 +0000
+ -- Jason Gerard DeRose <jderose@novacut.com>  Mon, 23 Jan 2012 10:57:42 +0000
