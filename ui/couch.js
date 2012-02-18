@@ -543,6 +543,13 @@ couch.Session.prototype = {
         }
     },
 
+    get_doc: function(_id) {
+        if (!this.docs[_id]) {
+            this.docs[_id] = this.db.get_sync(_id);
+        }
+        return this.docs[_id];
+    },
+
     save: function(doc) {
         /*
         Mark *doc* as dirty, will save when Session.commit() is called.
