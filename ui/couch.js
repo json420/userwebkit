@@ -499,6 +499,9 @@ couch.Session.prototype = {
         var result = req.read();
         result.rows.forEach(function(row) {
             var doc = row.doc;
+            if (doc._id.slice(0, 1) == '_') {
+                return;
+            }
             this.docs[doc._id] = doc;
         }, this);
         var _id;
@@ -517,6 +520,9 @@ couch.Session.prototype = {
     on_changes: function(r) {
         r.results.forEach(function(row) {
             var doc = row.doc;
+            if (doc._id.slice(0, 1) == '_') {
+                return;
+            }
             if (doc.session_id == this.session_id) {
                 return;
             }
