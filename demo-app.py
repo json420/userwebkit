@@ -39,7 +39,7 @@ class App(BaseApp):
     splash = 'splash.html'
     page = 'index.html'
 
-    proxy_bus = 'org.freedesktop.DMedia'
+    proxy_bus = 'org.freedesktop.Dmedia'
     local = None
 
     signals = {
