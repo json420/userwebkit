@@ -452,7 +452,7 @@ couch.Database.prototype = {
 
     att_css_url: function(doc_or_id, name) {
         /*
-        
+
         Return an attachment URL formatted to be used in CSS.
 
         For example:
@@ -484,30 +484,49 @@ couch.Session = function(db, callback) {
     this.callback = callback;
     this.docs = {};
     this.dirty = {};
-    this.s = new couch.Server(this.db.url);
     this.session_id = couch.random_id2();
 }
 couch.Session.prototype = {
     start: function() {
-        var r = this.db.get_sync('_all_docs', {include_docs: true});
-        r.rows.forEach(function(row) {
+        var self = this;
+        var on_docs = function(req) {
+            self.on_docs(req);
+        }
+        this.db.get(on_docs, '_all_docs', {include_docs: true, update_seq: true});
+    },
+
+    on_docs: function(req) {
+        var result = req.read();
+        result.rows.forEach(function(row) {
             var doc = row.doc;
             this.docs[doc._id] = doc;
         }, this);
-        var self = this;
-        var callback = function(r) {
-            self.on_changes(r);
+        var _id;
+        for (_id in this.docs) {
+            this.callback(this.docs[_id]);
         }
-        var since = this.db.get_sync().update_seq;
-        this.monitor = this.db.monitor_changes(callback, since);
+
+        // Now start the changes monitor starting at the current update_seq
+        var self = this;
+        var on_changes = function(req) {
+            self.on_changes(req);
+        }
+        this.monitor = this.db.monitor_changes(on_changes, result.update_seq);
     },
 
     on_changes: function(r) {
         r.results.forEach(function(row) {
             var doc = row.doc;
-            if (doc.session_id != this.session_id) {
+            if (doc.session_id == this.session_id) {
+                return;
+            }
+            if (!this.docs[doc._id]) {
                 this.docs[doc._id] = doc;
                 this.callback(doc);
+            }
+            else {
+                this.docs[doc._id] = doc;
+                this.emit(doc);
             }
         }, this);
     },
@@ -517,7 +536,6 @@ couch.Session.prototype = {
         var rows = req.read();
         rows.forEach(function(row) {
             this.docs[row.id]._rev = row.rev;
-            
         }, this);
         if (this.pending) {
             this.pending = false;
@@ -525,12 +543,22 @@ couch.Session.prototype = {
         }
     },
 
-    mark: function(doc) {
+    save: function(doc) {
         /*
         Mark *doc* as dirty, will save when Session.commit() is called.
+
+        This will immediately fire the change notification for this doc, and
+        this change will be ignore when it is recieved through the changes feed.
         */
         this.dirty[doc._id] = doc;
         doc.session_id = this.session_id;
+        if (!this.docs[doc._id]) {
+            this.docs[doc._id] = doc;
+            this.callback(doc);
+        }
+        else {
+            this.emit(doc);
+        }
     },
 
     commit: function() {
@@ -551,6 +579,32 @@ couch.Session.prototype = {
             self.on_complete(req);
         }
         this.req = this.db.post(callback, {docs: docs, all_or_nothing: true}, '_bulk_docs');
+    },
+
+    ids: {},
+
+    subscribe: function(_id, callback, self) {
+        /*
+        Subscribe to changes on the doc with *_id*.
+
+        For example:
+
+        >>> session.subscribe(doc._id, this.on_changed, this);
+
+        */
+        if (! this.ids[_id]) {
+            this.ids[_id] = [];
+        }
+        this.ids[_id].push({callback: callback, self: self});
+    },
+
+    emit: function(doc) {
+        var handlers = this.ids[doc._id];
+        if (handlers) {
+            handlers.forEach(function(h) {
+                h.callback.call(h.self, doc);
+            });
+        }
     },
 }
 

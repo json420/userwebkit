@@ -14,13 +14,68 @@ body {
 "use strict"; 
 
 // The `novacut` CouchDB database:
-var db = new couch.Database('novacut');
+var db = new couch.Database('demo-0');
+var doc1 = {'_id': couch.random_id(), 'from': 'remote'};
+db.save(doc1);
+var doc2 = {'_id': couch.random_id(), 'from': 'local'};
+db.save(doc2);
+
+
+function on_new_doc(doc) {
+    console.log(['new_doc', JSON.stringify(doc)].join(' '));
+}
+
+function on_change1(doc) {
+    console.log(['remote', JSON.stringify(doc)].join(' '));
+}
+
+
+function on_change2(doc) {
+    console.log(['local', JSON.stringify(doc)].join(' '));
+}
+
+
+var session = new couch.Session(db, on_new_doc);
+session.subscribe(doc1._id, on_change1);
+session.subscribe(doc2._id, on_change2);
+
+
+function on_interval1() {
+    doc1.mtime = couch.time();
+    db.save(doc1);
+}
+
+
+function on_interval2() {
+    doc2.mtime = couch.time();
+    session.save(doc2);
+    session.commit();
+}
+
+
+function on_interval3() {
+    var doc = {'_id': couch.random_id(), 'from': 'new_local'};
+    session.save(doc);
+    session.commit();
+}
+
+function on_interval4() {
+    var doc = {'_id': couch.random_id(), 'from': 'new_remote'};
+    db.post_sync(doc);
+}
+
 
 function hello() {
     $('button').onclick = click;
     var s = new couch.Server();
     $('hello').textContent = 'Demo is talking to CouchDB ' + s.get_sync()['version'];
+    session.start();
+    setInterval(on_interval1, 2000);
+    setInterval(on_interval2, 3000);
+    setInterval(on_interval3, 2500);
+    setInterval(on_interval4, 3500);
 }
+
 
 function click() {
     var b = $('button');
