@@ -587,6 +587,7 @@ couch.Session.prototype = {
             this.pending = true;
             return;
         }
+        this.dirty = {};
         var self = this;
         var callback = function(req) {
             self.on_complete(req);
