@@ -41,6 +41,7 @@ class App(BaseApp):
 
     proxy_bus = 'org.freedesktop.Dmedia'
     local = None
+    #decorated = False
 
     signals = {
         'toggle': ['active'],

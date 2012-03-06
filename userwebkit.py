@@ -252,6 +252,8 @@ class BaseApp(object):
     width = 960  # Default Gtk.Window width
     height = 540  # Default Gtk.Window height
     maximize = False  # If True, start with Gtk.Window maximized
+    decorated = True  # If False, call window.set_decorated(False)
+
 
     signals = None
 
@@ -315,6 +317,8 @@ class BaseApp(object):
         self.window.connect('destroy', self.quit)
         if self.maximize:
             self.window.maximize()
+        if not self.decorated:
+            self.window.set_decorated(False)
         self.window.set_default_size(self.width, self.height)
         self.window.set_title(self.title)
         self.vpaned = Gtk.VPaned()
