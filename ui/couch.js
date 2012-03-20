@@ -556,7 +556,7 @@ couch.Session.prototype = {
         return this.docs[_id];
     },
 
-    save: function(doc) {
+    save: function(doc, no_emit) {
         /*
         Mark *doc* as dirty, will save when Session.commit() is called.
 
@@ -569,7 +569,7 @@ couch.Session.prototype = {
             this.docs[doc._id] = doc;
             this.callback(doc);
         }
-        else {
+        else if (!no_emit) {
             this.emit(doc);
         }
     },
