@@ -618,6 +618,9 @@ couch.Session.prototype = {
             handlers.forEach(function(h) {
                 h.callback.call(h.self, doc);
             });
+            if (doc._deleted) {
+                delete this.ids[doc._id];
+            }
         }
     },
 }
