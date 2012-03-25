@@ -482,6 +482,7 @@ couch.Database.prototype.__proto__ = couch.CouchBase.prototype;
 couch.Session = function(db, callback) {
     this.db = db;
     this.callback = callback;
+    this.timeout_id = null;
     this.docs = {};
     this.dirty = {};
     this.session_id = couch.random_id2();
@@ -593,6 +594,17 @@ couch.Session.prototype = {
             self.on_complete(req);
         }
         this.req = this.db.post(callback, {docs: docs, all_or_nothing: true}, '_bulk_docs');
+    },
+
+    delayed_commit: function() {
+        if (this.timeout_id == null) {
+            var self = this;
+            var callback = function() {
+                self.timeout_id = null;
+                self.commit();
+            }
+            this.timeout_id = setTimeout(callback, 500);
+        } 
     },
 
     ids: {},
