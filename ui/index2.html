@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" href="base.css" />
+<style>
+body {
+    text-align: center;
+}
+</style>
+<script src="couch.js"></script>
+<script src="base.js"></script>
+<script>
+"use strict"; 
+
+// The CouchDB database:
+var db = new couch.Database('demo-0');
+
+function hello() {
+    var s = new couch.Server();
+    $('hello').textContent = 'Demo is talking to CouchDB ' + s.get_sync()['version'];
+}
+
+</script>
+</head>
+<body onload="hello()">
+<p id="hello"></p>
+</body>
+</html>
