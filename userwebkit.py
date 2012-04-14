@@ -234,7 +234,6 @@ class BaseApp(object):
     maximize = False  # If True, start with Gtk.Window maximized
     decorated = True  # If False, call window.set_decorated(False)
 
-
     signals = None
 
     # Methods that subclasses likely want to override, in order they're called:
