@@ -31,36 +31,17 @@ import optparse
 
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
-from gi.repository import GObject, Gtk, WebKit, Gio
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GObject, Gtk, WebKit
 from gi.repository.GObject import TYPE_PYOBJECT
-
-
-GObject.threads_init()
 
 __version__ = '12.04.0'
 APPS = '/usr/share/couchdb/apps/'
 
-
-class DBus:
-    def __init__(self, conn):
-        self.conn = conn
-
-    def get(self, bus, path, iface=None):
-        if iface is None:
-            iface = bus
-        return Gio.DBusProxy.new_sync(
-            self.conn, 0, None, bus, path, iface, None
-        )
-
-    def get_async(self, callback, bus, path, iface=None):
-        if iface is None:
-            iface = bus
-        Gio.DBusProxy.new(
-            self.conn, 0, None, bus, path, iface, None, callback, None
-        )
-
-
-session = DBus(Gio.bus_get_sync(Gio.BusType.SESSION, None))
+GObject.threads_init()
+DBusGMainLoop(set_as_default=True)
+session = dbus.SessionBus()
 
 
 def handler(d):
@@ -364,10 +345,7 @@ class BaseApp(object):
         if self.options.benchmark:
             Gtk.main_quit()
             return
-        session.get_async(self.on_proxy, self.proxy_bus, self.proxy_path)
-
-    def on_proxy(self, proxy, async_result, *args):
-        self.proxy = proxy
+        self.proxy = session.get_object(self.proxy_bus, self.proxy_path)
         env = json.loads(self.proxy.GetEnv())
         self.set_env(env)
         self.post_env_init()
