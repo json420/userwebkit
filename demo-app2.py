@@ -21,11 +21,6 @@
 # Authors:
 #   Jason Gerard DeRose <jderose@novacut.com>
 
-from urllib.parse import urlparse
-
-from dmedia import local
-from dmedia.gtk.util import Timer
-
 import userwebkit
 from userwebkit import BaseApp
 
