@@ -388,7 +388,6 @@ class TestBaseApp(TestCase):
         self.assertEqual(app.dbname, 'userwebkit-0')
         self.assertIsNone(app.version)
         self.assertEqual(app.title, 'App Window Title')
-        self.assertIsNone(app.splash)
         self.assertEqual(app.page, 'index.html')
 
         self.assertIs(app.enable_inspector, True)

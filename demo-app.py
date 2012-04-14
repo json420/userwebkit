@@ -21,9 +21,7 @@
 # Authors:
 #   Jason Gerard DeRose <jderose@novacut.com>
 
-from urllib.parse import urlparse
 
-from dmedia import local
 from dmedia.gtk.util import Timer
 
 import userwebkit
@@ -36,11 +34,8 @@ class App(BaseApp):
     version = userwebkit.__version__
     title = 'UserWebKit Demo'
 
-    splash = 'splash.html'
     page = 'index.html'
-
     proxy_bus = 'org.freedesktop.Dmedia'
-    local = None
     #decorated = False
 
     signals = {
@@ -86,29 +81,10 @@ class App(BaseApp):
 
     def on_timer(self):
         self.hub.send('timer', self.count)
-        self.count += 1  
+        self.count += 1
 
     def dmedia_resolver(self, uri):
-        if self.env is None:
-            return ''
-        if self.local is None:
-            self.local = local.LocalSlave(self.env)
-        try:
-            u = urlparse(uri)
-            _id = u.path
-            doc = self.local.get_doc(_id)
-            if doc.get('proxies'):
-                proxies = doc['proxies']
-                for proxy in proxies:
-                    try:
-                        st = self.local.stat(proxy)
-                        return 'file://' + st.name
-                    except (local.NoSuchFile, local.FileNotLocal):
-                        pass
-            st = self.local.stat2(doc)
-            return 'file://' + st.name
-        except Exception:    
-            return ''
+        return self.proxy.ResolveURI(uri)
 
 
 app = App()

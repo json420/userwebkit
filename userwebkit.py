@@ -31,36 +31,17 @@ import optparse
 
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
-from gi.repository import GObject, Gtk, WebKit, Gio
+import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+from gi.repository import GObject, Gtk, WebKit
 from gi.repository.GObject import TYPE_PYOBJECT
-
-
-GObject.threads_init()
 
 __version__ = '12.04.0'
 APPS = '/usr/share/couchdb/apps/'
 
-
-class DBus:
-    def __init__(self, conn):
-        self.conn = conn
-
-    def get(self, bus, path, iface=None):
-        if iface is None:
-            iface = bus
-        return Gio.DBusProxy.new_sync(
-            self.conn, 0, None, bus, path, iface, None
-        )
-
-    def get_async(self, callback, bus, path, iface=None):
-        if iface is None:
-            iface = bus
-        Gio.DBusProxy.new(
-            self.conn, 0, None, bus, path, iface, None, callback, None
-        )
-
-
-session = DBus(Gio.bus_get_sync(Gio.BusType.SESSION, None))
+GObject.threads_init()
+DBusGMainLoop(set_as_default=True)
+session = dbus.SessionBus()
 
 
 def handler(d):
@@ -239,7 +220,6 @@ class BaseApp(object):
     dbname = 'userwebkit-0'  # Main CouchDB database name
     version = None  # Your app version, eg '12.04.0'
     title = 'App Window Title'  # Default Gtk.Window title
-    splash = None  # Splash page to load while waiting for CouchDB
     page = 'index.html'  # Default page to load once CouchDB is available
 
     enable_inspector = True  # If True, enable WebKit inspector
@@ -253,7 +233,6 @@ class BaseApp(object):
     height = 540  # Default Gtk.Window height
     maximize = False  # If True, start with Gtk.Window maximized
     decorated = True  # If False, call window.set_decorated(False)
-
 
     signals = None
 
@@ -328,13 +307,6 @@ class BaseApp(object):
         self.scroll.set_policy(
             Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
-        self.view = CouchView(None, self.dmedia_resolver)
-        self.view.connect('open', self.on_open)
-        self.scroll.add(self.view)
-        if self.enable_inspector:
-            self.view.get_settings().set_property('enable-developer-extras', True)
-            inspector = self.view.get_inspector()
-            inspector.connect('inspect-web-view', self.on_inspect)
 
     def get_page(self):
         if self.options.page:
@@ -344,11 +316,6 @@ class BaseApp(object):
     def run(self):
         self.parse()
         self.build_window()
-        self.hub = hub_factory(self.signals)(self.view)
-        self.connect_hub_signals(self.hub)
-        if self.splash:
-            splash = open(path.join(self.ui, self.splash), 'r').read()
-            self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
         self.window.show_all()
         GObject.idle_add(self.on_idle)
         Gtk.main()
@@ -364,11 +331,23 @@ class BaseApp(object):
         if self.options.benchmark:
             Gtk.main_quit()
             return
-        session.get_async(self.on_proxy, self.proxy_bus, self.proxy_path)
-
-    def on_proxy(self, proxy, async_result, *args):
-        self.proxy = proxy
+        self.proxy = session.get_object(self.proxy_bus, self.proxy_path)
         env = json.loads(self.proxy.GetEnv())
+
+        # Add the CouchView
+        self.view = CouchView(None, self.dmedia_resolver)
+        self.view.connect('open', self.on_open)
+        self.scroll.add(self.view)
+        if self.enable_inspector:
+            self.view.get_settings().set_property('enable-developer-extras', True)
+            inspector = self.view.get_inspector()
+            inspector.connect('inspect-web-view', self.on_inspect)
+        self.view.show()
+
+        # Create the hub
+        self.hub = hub_factory(self.signals)(self.view)
+        self.connect_hub_signals(self.hub)
+        
         self.set_env(env)
         self.post_env_init()
         page = self.get_page()
