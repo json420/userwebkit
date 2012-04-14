@@ -36,7 +36,6 @@ class App(BaseApp):
     version = userwebkit.__version__
     title = 'UserWebKit Demo'
 
-    splash = 'splash.html'
     page = 'index.html'
 
     proxy_bus = 'org.freedesktop.Dmedia'

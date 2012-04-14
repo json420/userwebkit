@@ -220,7 +220,6 @@ class BaseApp(object):
     dbname = 'userwebkit-0'  # Main CouchDB database name
     version = None  # Your app version, eg '12.04.0'
     title = 'App Window Title'  # Default Gtk.Window title
-    splash = None  # Splash page to load while waiting for CouchDB
     page = 'index.html'  # Default page to load once CouchDB is available
 
     enable_inspector = True  # If True, enable WebKit inspector
@@ -309,13 +308,6 @@ class BaseApp(object):
         self.scroll.set_policy(
             Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC
         )
-        self.view = CouchView(None, self.dmedia_resolver)
-        self.view.connect('open', self.on_open)
-        self.scroll.add(self.view)
-        if self.enable_inspector:
-            self.view.get_settings().set_property('enable-developer-extras', True)
-            inspector = self.view.get_inspector()
-            inspector.connect('inspect-web-view', self.on_inspect)
 
     def get_page(self):
         if self.options.page:
@@ -325,11 +317,6 @@ class BaseApp(object):
     def run(self):
         self.parse()
         self.build_window()
-        self.hub = hub_factory(self.signals)(self.view)
-        self.connect_hub_signals(self.hub)
-        if self.splash:
-            splash = open(path.join(self.ui, self.splash), 'r').read()
-            self.view.load_string(splash, 'text/html', 'UTF-8', 'file:///')
         self.window.show_all()
         GObject.idle_add(self.on_idle)
         Gtk.main()
@@ -347,6 +334,21 @@ class BaseApp(object):
             return
         self.proxy = session.get_object(self.proxy_bus, self.proxy_path)
         env = json.loads(self.proxy.GetEnv())
+
+        # Add the CouchView
+        self.view = CouchView(None, self.dmedia_resolver)
+        self.view.connect('open', self.on_open)
+        self.scroll.add(self.view)
+        if self.enable_inspector:
+            self.view.get_settings().set_property('enable-developer-extras', True)
+            inspector = self.view.get_inspector()
+            inspector.connect('inspect-web-view', self.on_inspect)
+        self.view.show()
+
+        # Create the hub
+        self.hub = hub_factory(self.signals)(self.view)
+        self.connect_hub_signals(self.hub)
+        
         self.set_env(env)
         self.post_env_init()
         page = self.get_page()
