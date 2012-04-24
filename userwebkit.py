@@ -36,7 +36,7 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject, Gtk, WebKit
 from gi.repository.GObject import TYPE_PYOBJECT
 
-__version__ = '12.04.0'
+__version__ = '12.05.0'
 APPS = '/usr/share/couchdb/apps/'
 
 GObject.threads_init()
