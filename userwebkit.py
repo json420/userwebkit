@@ -41,7 +41,6 @@ APPS = '/usr/share/couchdb/apps/'
 
 GObject.threads_init()
 DBusGMainLoop(set_as_default=True)
-session = dbus.SessionBus()
 
 
 def handler(d):
@@ -334,6 +333,7 @@ class BaseApp(object):
         if self.options.benchmark:
             Gtk.main_quit()
             return
+        session = dbus.SessionBus()
         self.proxy = session.get_object(self.proxy_bus, self.proxy_path)
         env = json.loads(self.proxy.GetEnv())
 
