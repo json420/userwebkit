@@ -542,7 +542,9 @@ couch.Session.prototype = {
         this.req = null;
         var rows = req.read();
         rows.forEach(function(row) {
-            this.docs[row.id]._rev = row.rev;
+            if (row.rev) {
+                this.docs[row.id]._rev = row.rev;
+            }
         }, this);
         if (this.pending) {
             this.pending = false;
@@ -593,7 +595,7 @@ couch.Session.prototype = {
         var callback = function(req) {
             self.on_complete(req);
         }
-        this.req = this.db.post(callback, {docs: docs, all_or_nothing: true}, '_bulk_docs');
+        this.req = this.db.post(callback, {docs: docs}, '_bulk_docs');
     },
 
     delayed_commit: function() {
