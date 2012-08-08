@@ -28,6 +28,7 @@ from os import path
 from urllib.parse import urlparse, parse_qsl
 import json
 import optparse
+import logging
 
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
@@ -36,11 +37,12 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject, Gtk, WebKit
 from gi.repository.GObject import TYPE_PYOBJECT
 
+
 __version__ = '12.08.0'
 APPS = '/usr/share/couchdb/apps/'
-
 GObject.threads_init()
 DBusGMainLoop(set_as_default=True)
+log = logging.getLogger('userwebkit')
 
 
 def handler(d):
@@ -59,6 +61,7 @@ class CouchView(WebKit.WebView):
 
     def __init__(self, env=None, dmedia_resolver=None):
         super().__init__()
+        self._logging_enabled = False
         self.connect('resource-request-starting', self._on_request)
         self.connect('navigation-policy-decision-requested',
             self._on_nav_policy_decision
@@ -80,6 +83,14 @@ class CouchView(WebKit.WebView):
     def set_recv(self, recv):
         self._recv = recv
         self.connect('notify::title', self._on_notify_title)
+
+    def enable_logging(self):
+        if not self._logging_enabled:
+            self._logging_enabled = True
+            self.connect('console-message', self._on_console_message)
+
+    def _on_console_message(self, view, message, line, source_id):
+        log.debug('%s @%s: %s', source_id, line, message)
 
     def _on_request(self, view, frame, resource, request, response):
         if self._env is None:
@@ -222,6 +233,7 @@ class BaseApp(object):
     page = 'index.html'  # Default page to load once CouchDB is available
 
     enable_inspector = True  # If True, enable WebKit inspector
+    enable_logging = True  # If True, send console message to Python logging
 
     dmedia_resolver = None  # Callback to resolve Dmedia URIs
 
@@ -345,6 +357,8 @@ class BaseApp(object):
             self.view.get_settings().set_property('enable-developer-extras', True)
             inspector = self.view.get_inspector()
             inspector.connect('inspect-web-view', self.on_inspect)
+        if self.enable_logging:
+            self.view.enable_logging()
         self.view.show()
 
         # Create the hub
