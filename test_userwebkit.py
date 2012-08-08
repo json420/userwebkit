@@ -215,7 +215,7 @@ class TestCouchView(TestCase):
         self.assertEqual(view._oauth, env['oauth'])
         self.assertEqual(view._basic, env['basic'])
 
-    def testset_env(self):
+    def test_set_env(self):
         view = userwebkit.CouchView()
 
         env = random_env()
@@ -239,6 +239,13 @@ class TestCouchView(TestCase):
         self.assertIsNone(view._u)
         self.assertIsNone(view._oauth)
         self.assertIsNone(view._basic)
+
+    def test_enable_logging(self):
+        view = userwebkit.CouchView()
+        self.assertFalse(view._logging_enabled)
+        self.assertIsNone(view.enable_logging())
+        self.assertTrue(view._logging_enabled)
+        self.assertIsNone(view.enable_logging())
 
     def test_on_request(self):
         view = userwebkit.CouchView()
