@@ -230,6 +230,7 @@ class BaseApp(object):
     page = 'index.html'  # Default page to load once CouchDB is available
 
     enable_inspector = True  # If True, enable WebKit inspector
+    enable_logging = True  # If True, send console message to Python logging
 
     dmedia_resolver = None  # Callback to resolve Dmedia URIs
 
@@ -353,6 +354,8 @@ class BaseApp(object):
             self.view.get_settings().set_property('enable-developer-extras', True)
             inspector = self.view.get_inspector()
             inspector.connect('inspect-web-view', self.on_inspect)
+        if self.enable_logging:
+            self.view.enable_logging()
         self.view.show()
 
         # Create the hub
