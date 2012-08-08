@@ -37,9 +37,9 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GObject, Gtk, WebKit
 from gi.repository.GObject import TYPE_PYOBJECT
 
+
 __version__ = '12.08.0'
 APPS = '/usr/share/couchdb/apps/'
-
 GObject.threads_init()
 DBusGMainLoop(set_as_default=True)
 log = logging.getLogger('userwebkit')
