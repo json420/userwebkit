@@ -39,6 +39,7 @@ from gi.repository.GObject import SIGNAL_RUN_LAST, TYPE_NONE, TYPE_PYOBJECT
 import userwebkit
 
 
+orig_log = userwebkit.log
 random = SystemRandom()
 
 
@@ -127,6 +128,14 @@ class DummyCouchView:
 
     def execute_script(self, script):
         self._scripts.append(script)
+ 
+
+class DummyLogger:
+    def __init__(self):
+        self._messages = []
+
+    def debug(self, *args):
+        self._messages.append(args)
 
 
 class TestFunctions(TestCase):
@@ -195,6 +204,9 @@ class TestFunctions(TestCase):
 
 
 class TestCouchView(TestCase):
+    def tearDown(self):
+        userwebkit.log = orig_log
+
     def test_init(self):
         view = userwebkit.CouchView()
         self.assertIsNone(view._env)
@@ -246,6 +258,19 @@ class TestCouchView(TestCase):
         self.assertIsNone(view.enable_logging())
         self.assertTrue(view._logging_enabled)
         self.assertIsNone(view.enable_logging())
+
+    def test_on_console_message(self):
+        view = userwebkit.CouchView()
+        log = DummyLogger()
+        userwebkit.log = log
+        message = 'hello ' + random_id()
+        line = 25
+        source_id = 'http://localhost:36163/_intree/index.html'
+        view._on_console_message(None, message, line, source_id)
+        self.assertEqual(
+            log._messages,
+            [('%s @%s: %s', source_id, line, message)]
+        )
 
     def test_on_request(self):
         view = userwebkit.CouchView()
