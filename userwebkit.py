@@ -61,6 +61,7 @@ class CouchView(WebKit.WebView):
 
     def __init__(self, env=None, dmedia_resolver=None):
         super().__init__()
+        self._logging_enabled = False
         self.connect('resource-request-starting', self._on_request)
         self.connect('navigation-policy-decision-requested',
             self._on_nav_policy_decision
@@ -82,9 +83,11 @@ class CouchView(WebKit.WebView):
     def set_recv(self, recv):
         self._recv = recv
         self.connect('notify::title', self._on_notify_title)
-        
+
     def enable_logging(self):
-        self.connect('console-message', self._on_console_message)
+        if not self._logging_enabled:
+            self._logging_enabled = True
+            self.connect('console-message', self._on_console_message)
 
     def _on_console_message(self, view, message, line, source_id):
         log.debug('%s @%s: %s', source_id, line, message)
