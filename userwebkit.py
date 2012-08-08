@@ -28,6 +28,7 @@ from os import path
 from urllib.parse import urlparse, parse_qsl
 import json
 import optparse
+import logging
 
 import microfiber
 from microfiber import _oauth_header, _basic_auth_header
@@ -41,6 +42,7 @@ APPS = '/usr/share/couchdb/apps/'
 
 GObject.threads_init()
 DBusGMainLoop(set_as_default=True)
+log = logging.getLogger('userwebkit')
 
 
 def handler(d):
@@ -80,6 +82,12 @@ class CouchView(WebKit.WebView):
     def set_recv(self, recv):
         self._recv = recv
         self.connect('notify::title', self._on_notify_title)
+        
+    def enable_logging(self):
+        self.connect('console-message', self._on_console_message)
+
+    def _on_console_message(self, view, message, line, source_id):
+        log.debug('%s @%s: %s', source_id, line, message)
 
     def _on_request(self, view, frame, resource, request, response):
         if self._env is None:
