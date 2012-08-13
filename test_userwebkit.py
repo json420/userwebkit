@@ -80,9 +80,10 @@ class DummyCallback:
 
 
 class DummyRequest:
-    def __init__(self, uri):
+    def __init__(self, uri, message = None):
         self.__uri = uri
         self._set_uri = None
+        self.message = None
 
     def get_uri(self):
         return self.__uri
@@ -91,6 +92,8 @@ class DummyRequest:
         assert self._set_uri is None
         self._set_uri = uri
 
+    def get_message(self):
+        return self.message
 
 class DummyPolicy:
     def __init__(self):
