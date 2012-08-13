@@ -83,7 +83,7 @@ class DummyRequest:
     def __init__(self, uri, message = None):
         self.__uri = uri
         self._set_uri = None
-        self.message = None
+        self.__message = message
 
     def get_uri(self):
         return self.__uri
@@ -93,7 +93,7 @@ class DummyRequest:
         self._set_uri = uri
 
     def get_message(self):
-        return self.message
+        return self.__message
 
 class DummyPolicy:
     def __init__(self):
