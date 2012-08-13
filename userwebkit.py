@@ -96,6 +96,7 @@ class CouchView(WebKit.WebView):
         if self._env is None:
             return
         uri = request.get_uri()
+        message = request.get_message()
         if uri.startswith('dmedia'):
             if self._dmedia_resolver is None:
                 request.set_uri('')
@@ -112,14 +113,14 @@ class CouchView(WebKit.WebView):
             if u.query and not query:
                 query = {u.query: ''}
             baseurl = ''.join([u.scheme, '://', u.netloc, u.path])
-            method = request.props.message.props.method
+            method = message.method
             h = _oauth_header(self._oauth, method, baseurl, query)
         elif self._basic:
             h = _basic_auth_header(self._basic)
         else:
             return
         for (key, value) in h.items():
-            request.props.message.props.request_headers.append(key, value)
+            message.request_headers.append(key, value)
 
     def _on_nav_policy_decision(self, view, frame, request, nav, policy):
         """
