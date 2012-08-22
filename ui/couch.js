@@ -399,6 +399,23 @@ couch.Database.prototype = {
     },
 
     view: function(callback, design, view, options) {
+        /*
+        Shortcut for making a GET request to a view.
+
+        If you don't supply *options* or if "reduce" isn't in *options*, this
+        method will default to {reduce: false}.  This way code that only
+        uses a view non-reduced doesn't break if you add or remove the reduce
+        function later.
+
+        Asside from that, this method just saves you having to type "_design"
+        and "_view" over and over.  This:
+
+            Database.view(callback, design, view, options);
+
+        Is basically a shortcut for:
+
+            Database.get(callback, ['_design', design, '_view', view], options);
+        */
         if (options == undefined) {
             options = {'reduce': false};
         }
@@ -412,14 +429,19 @@ couch.Database.prototype = {
         /*
         Shortcut for making a GET request to a view.
 
-        No magic here, just saves you having to type "_design" and "_view" over
-        and over.  This:
+        If you don't supply *options* or if "reduce" isn't in *options*, this
+        method will default to {reduce: false}.  This way code that only
+        uses a view non-reduced doesn't break if you add or remove the reduce
+        function later.
 
-            Database.view(design, view, options);
+        Asside from that, this method just saves you having to type "_design"
+        and "_view" over and over.  This:
 
-        Is just a shortcut for:
+            Database.view_sync(design, view, options);
 
-            Database.view(['_design', design, '_view', view], options);
+        Is basically a shortcut for:
+
+            Database.get_sync(['_design', design, '_view', view], options);
         */
         if (options == undefined) {
             options = {'reduce': false};
