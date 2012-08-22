@@ -399,6 +399,12 @@ couch.Database.prototype = {
     },
 
     view: function(callback, design, view, options) {
+        if (options == undefined) {
+            options = {'reduce': false};
+        }
+        else if (options['reduce'] == undefined) {
+            options['reduce'] = false;
+        }
         return this.get(callback, ['_design', design, '_view', view], options);
     },
 
@@ -415,6 +421,12 @@ couch.Database.prototype = {
 
             Database.view(['_design', design, '_view', view], options);
         */
+        if (options == undefined) {
+            options = {'reduce': false};
+        }
+        else if (options['reduce'] == undefined) {
+            options['reduce'] = false;
+        }
         return this.get_sync(['_design', design, '_view', view], options);
     },
 
