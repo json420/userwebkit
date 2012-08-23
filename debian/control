@@ -3,8 +3,8 @@ Section: python
 Priority: optional
 Maintainer: Jason Gerard DeRose <jderose@novacut.com>
 Build-Depends: debhelper (>= 8.9), python3 (>= 3.2),
-    python3-microfiber (>= 12.05),
-    python3-usercouch (>= 12.05),
+    python3-microfiber (>= 12.08),
+    python3-usercouch (>= 12.08),
     python3-dbus,
     python3-gi,
     gir1.2-gtk-3.0,
@@ -18,8 +18,8 @@ Homepage: https://launchpad.net/userwebkit
 Package: python3-userwebkit
 Architecture: all
 Depends: ${misc:Depends}, python3 (>= 3.2),
-    python3-microfiber (>= 12.05),
-    python3-usercouch (>= 12.05) | dc3 (>= 12.02),
+    python3-microfiber (>= 12.08),
+    python3-usercouch (>= 12.08) | dc3 (>= 12.02),
     python3-dbus,
     python3-gi,
     gir1.2-gtk-3.0,
