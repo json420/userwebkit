@@ -25,6 +25,10 @@
 Install `userwebkit`.
 """
 
+import sys
+if sys.version_info < (3, 2):
+    sys.exit('ERROR: UserWebKit requires Python 3.2 or newer')
+
 from distutils.core import setup
 from distutils.cmd import Command
 from unittest import TestLoader, TextTestRunner
@@ -66,7 +70,7 @@ setup(
     name='userwebkit',
     description='so WebKitGtk apps can to talk to a usercouch',
     url='https://launchpad.net/userwebkit',
-    version='12.08.0',
+    version='12.09.0',
     author='Jason Gerard DeRose',
     author_email='jderose@novacut.com',
     license='LGPLv3+',
