@@ -12,8 +12,7 @@ Build-Depends: debhelper (>= 9),
     gir1.2-webkit-3.0,
     xvfb,
 Standards-Version: 3.9.2
-X-Python-Version: 3.2
-X-Python3-Version: 3.2
+X-Python3-Version: >= 3.2
 Homepage: https://launchpad.net/userwebkit
 
 Package: python3-userwebkit
