@@ -125,9 +125,9 @@ class DummyCouchView:
         assert not hasattr(self, '_env')
         self._env = env
 
-    def set_recv(self, recv):
-        assert not hasattr(self, '_recv')
-        self._recv = recv
+    def connect(self, *args):
+        assert not hasattr(self, '_connect')
+        self._connect = args
 
     def execute_script(self, script):
         self._scripts.append(script)
@@ -178,7 +178,9 @@ class TestFunctions(TestCase):
         # Make sure we can connect to all the expected signals:
         view = DummyCouchView()
         hub = klass(view)
-        self.assertEqual(view._recv, hub.recv)
+        self.assertEqual(view._connect,
+            ('notify::title', hub._on_notify_title)
+        )
         cb = DummyCallback()
         hub.connect('foo', cb)
         hub.connect('bar', cb)
