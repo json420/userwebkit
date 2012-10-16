@@ -80,10 +80,6 @@ class CouchView(WebKit.WebView):
         self._oauth = env.get('oauth')
         self._basic = env.get('basic')
 
-    def set_recv(self, recv):
-        self._recv = recv
-        self.connect('notify::title', self._on_notify_title)
-
     def enable_logging(self):
         if not self._logging_enabled:
             self._logging_enabled = True
@@ -151,12 +147,6 @@ class CouchView(WebKit.WebView):
         policy.ignore()
         return True
 
-    def _on_notify_title(self, view, notify):
-        title = view.get_property('title')
-        if title is None:
-            return
-        self._recv(title)
-
 
 class Inspector(Gtk.VBox):
     def __init__(self, env):
@@ -190,14 +180,14 @@ class Hub(GObject.GObject):
     def __init__(self, view):
         super().__init__()
         self._view = view
-        view.set_recv(self.recv)
+        view.connect('notify::title', self._on_notify_title)
 
-    def recv(self, data):
-        try:
-            obj = json.loads(data)
-            self.emit(obj['signal'], *obj['args'])
-        except ValueError:
-            pass
+    def _on_notify_title(self, view, notify):
+        title = view.get_property('title')
+        if title is None:
+            return
+        obj = json.loads(title)
+        self.emit(obj['signal'], *obj['args'])
 
     def send(self, signal, *args):
         """
