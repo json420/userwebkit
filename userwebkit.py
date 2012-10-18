@@ -186,7 +186,12 @@ class Hub(GObject.GObject):
         title = view.get_property('title')
         if title is None:
             return
-        obj = json.loads(title)
+        try:
+            obj = json.loads(title)
+        except ValueError:
+            return
+        if not isinstance(obj, dict):
+            return
         self.emit(obj['signal'], *obj['args'])
 
     def send(self, signal, *args):
