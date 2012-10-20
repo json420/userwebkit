@@ -527,17 +527,19 @@ couch.Session.prototype = {
         var on_docs = function(req) {
             self.on_docs(req);
         }
-        this.db.get(on_docs, '_all_docs', {include_docs: true, update_seq: true});
+        var options = {
+            'endkey': '_',
+            'update_seq': true,
+            'include_docs': true,
+        }
+        this.db.get(on_docs, '_all_docs', options);
     },
 
     on_docs: function(req) {
         var result = req.read();
         result.rows.forEach(function(row) {
-            var doc = row.doc;
-            if (doc._id.slice(0, 1) == '_') {
-                return;
-            }
-            this.docs[doc._id] = doc;
+            console.assert(row.id[0] != '_');
+            this.docs[row.id] = row.doc;
         }, this);
         var _id;
         for (_id in this.docs) {
@@ -552,23 +554,34 @@ couch.Session.prototype = {
         this.monitor = this.db.monitor_changes(on_changes, result.update_seq);
     },
 
-    on_changes: function(r) {
-        r.results.forEach(function(row) {
-            var doc = row.doc;
-            if (doc._id.slice(0, 1) == '_') {
+    on_changes: function(result) {
+        // Get all the docs in this.docs before calling any callbacks
+        var new_docs = [];
+        var changed_docs = [];
+        result.results.forEach(function(row) {
+            if (row.id[0] == '_') {
                 return;
             }
-            if (doc.session_id == this.session_id) {
+            if (row.doc.session_id == this.session_id) {
                 return;
             }
-            if (!this.docs[doc._id]) {
-                this.docs[doc._id] = doc;
-                this.callback(doc);
+            if (!this.docs[row.id]) {
+                new_docs.push(row.doc);
             }
             else {
-                this.docs[doc._id] = doc;
-                this.emit(doc);
+                changed_docs.push(row.doc);
             }
+            this.docs[row.id] = row.doc;
+        }, this);
+
+        // Now call callback for new docs
+        new_docs.forEach(function(doc) {
+            this.callback(doc);
+        }, this);
+
+        // And fire notifications for changed docs
+        changed_docs.forEach(function(doc) {
+            this.emit(doc);
         }, this);
     },
 
