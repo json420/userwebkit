@@ -555,7 +555,7 @@ couch.Session.prototype = {
     },
 
     on_changes: function(result) {
-        // Get all the docs in this.docs before calling any callbacks
+        // Get all the docs into this.docs before calling any callbacks
         var new_docs = [];
         var changed_docs = [];
         result.results.forEach(function(row) {
