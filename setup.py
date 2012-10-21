@@ -70,7 +70,7 @@ setup(
     name='userwebkit',
     description='so WebKitGtk apps can to talk to a usercouch',
     url='https://launchpad.net/userwebkit',
-    version='12.10.0',
+    version='12.11.0',
     author='Jason Gerard DeRose',
     author_email='jderose@novacut.com',
     license='LGPLv3+',
