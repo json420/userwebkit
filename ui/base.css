@@ -8,6 +8,15 @@ code, pre {
     font-size: 17px;
 }
 
+body, div, p, li, pre, code, img {
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+}
+
+p, li, pre, code {
+    cursor: default;
+}
+
 .hide {
     display: none !important;
 }
