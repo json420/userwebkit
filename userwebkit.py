@@ -199,7 +199,7 @@ class Hub(GObject.GObject):
         Emit a signal by calling the JavaScript Signal.recv() function.
         """
         script = 'Hub.recv({!r})'.format(
-            json.dumps({'signal': signal, 'args': args})
+            json.dumps({'signal': signal, 'args': args}, sort_keys=True)
         )
         self._view.execute_script(script)
         self.emit(signal, *args)        

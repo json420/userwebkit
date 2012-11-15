@@ -201,9 +201,9 @@ class TestFunctions(TestCase):
         )
         self.assertEqual(view._scripts,
             [
-                'Hub.recv(\'{"signal": "foo", "args": []}\')',
-                'Hub.recv(\'{"signal": "bar", "args": [17]}\')',
-                'Hub.recv(\'{"signal": "baz", "args": [true, null]}\')',
+                'Hub.recv(\'{"args": [], "signal": "foo"}\')',
+                'Hub.recv(\'{"args": [17], "signal": "bar"}\')',
+                'Hub.recv(\'{"args": [true, null], "signal": "baz"}\')',
             ]
         )
 
