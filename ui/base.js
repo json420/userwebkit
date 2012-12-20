@@ -153,6 +153,30 @@ function time() {
     return Date.now() / 1000;
 }
 
+function format_time(seconds) {
+    /*
+    Return *seconds* in 0:00:00 notation
+
+    For example:
+    >>> format_time(30)
+    "30 secs"
+    >>> format_time(325)
+    "5:25"
+    >>> format_time(3690)
+    "1:01:30"
+
+    */
+    var hr = Math.floor(seconds/3600);
+    var min = Math.floor((seconds%3600)/60);
+    var sec = seconds % 60;
+    
+    if (hr > 0) {
+        return hr + ':' + ("0" + min).slice (-2) 
+                  + ':' + ("0" + sec).slice (-2);
+    } else {
+        return min + ':' + ("0" + sec).slice (-2);
+    }
+}
 
 function bytes10(size) {
     /*
