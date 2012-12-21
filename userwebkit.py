@@ -38,7 +38,7 @@ from gi.repository import GObject, Gtk, WebKit
 from gi.repository.GObject import TYPE_PYOBJECT
 
 
-__version__ = '12.12.0'
+__version__ = '13.01.0'
 APPS = '/usr/share/couchdb/apps/'
 GObject.threads_init()
 DBusGMainLoop(set_as_default=True)
