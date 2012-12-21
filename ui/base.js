@@ -168,7 +168,7 @@ function format_time(seconds) {
     */
     var hr = Math.floor(seconds/3600);
     var min = Math.floor((seconds%3600)/60);
-    var sec = seconds % 60;
+    var sec = Math.round(seconds % 60);
     
     if (hr > 0) {
         return hr + ':' + ("0" + min).slice (-2) 
