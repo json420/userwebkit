@@ -1,2 +1,1 @@
-debian/userwebkit-crashdb.conf etc/apport/crashdb.conf.d/
 debian/source_userwebkit.py usr/share/apport/package-hooks/

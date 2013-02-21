@@ -1,10 +1,9 @@
 """
-apport package hook for userwebkit.
+Apport package hook for userwebkit (requires Apport 2.5 or newer).
 
 (c) 2012 Novacut Inc
 Author: Jason Gerard DeRose <jderose@novacut.com>
 """
 
 def add_info(report):
-    report['CrashDB'] = 'userwebkit'
-
+    report['CrashDB'] = "{'impl': 'launchpad', 'project': 'userwebkit'}"
