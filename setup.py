@@ -26,8 +26,8 @@ Install `userwebkit`.
 """
 
 import sys
-if sys.version_info < (3, 2):
-    sys.exit('ERROR: UserWebKit requires Python 3.2 or newer')
+if sys.version_info < (3, 3):
+    sys.exit('ERROR: UserWebKit requires Python 3.3 or newer')
 
 from distutils.core import setup
 from distutils.cmd import Command
