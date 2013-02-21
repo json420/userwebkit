@@ -26,13 +26,11 @@ Install `userwebkit`.
 """
 
 import sys
-if sys.version_info < (3, 2):
-    sys.exit('ERROR: UserWebKit requires Python 3.2 or newer')
+if sys.version_info < (3, 3):
+    sys.exit('ERROR: UserWebKit requires Python 3.3 or newer')
 
 from distutils.core import setup
 from distutils.cmd import Command
-from unittest import TestLoader, TextTestRunner
-from doctest import DocTestSuite
 import os
 from os import path
 
@@ -49,21 +47,9 @@ class Test(Command):
         pass
 
     def run(self):
-        pynames = ['userwebkit', 'test_userwebkit']
-
-        # Add unit-tests:
-        loader = TestLoader()
-        suite = loader.loadTestsFromNames(pynames)
-
-        # Add doc-tests:
-        for name in pynames:
-            suite.addTest(DocTestSuite(name))
-
-        # Run the tests:
-        runner = TextTestRunner(verbosity=2)
-        result = runner.run(suite)
-        if not result.wasSuccessful():
-            raise SystemExit(2)
+        from userwebkit.tests.run import run_tests
+        if not run_tests():
+            raise SystemExit('2')
 
 
 setup(
@@ -74,14 +60,12 @@ setup(
     author='Jason Gerard DeRose',
     author_email='jderose@novacut.com',
     license='LGPLv3+',
-    py_modules=['userwebkit'],
-    cmdclass={
-        'test': Test,
-        #'build': build_with_docs,
-    },
+    packages=['userwebkit', 'userwebkit.tests'],
+    cmdclass={'test': Test},
     data_files=[
         ('share/couchdb/apps/userwebkit',
             [path.join('ui', name) for name in os.listdir('ui')]
         ),
     ],
 )
+
