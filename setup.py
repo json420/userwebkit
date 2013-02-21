@@ -47,6 +47,7 @@ class Test(Command):
         pass
 
     def run(self):
+        from userwebkit.tests.run import run_tests
         if not run_tests():
             raise SystemExit('2')
 
