@@ -31,8 +31,6 @@ if sys.version_info < (3, 3):
 
 from distutils.core import setup
 from distutils.cmd import Command
-from unittest import TestLoader, TextTestRunner
-from doctest import DocTestSuite
 import os
 from os import path
 
@@ -49,21 +47,8 @@ class Test(Command):
         pass
 
     def run(self):
-        pynames = ['userwebkit', 'userwebkit.tests']
-
-        # Add unit-tests:
-        loader = TestLoader()
-        suite = loader.loadTestsFromNames(pynames)
-
-        # Add doc-tests:
-        for name in pynames:
-            suite.addTest(DocTestSuite(name))
-
-        # Run the tests:
-        runner = TextTestRunner(verbosity=2)
-        result = runner.run(suite)
-        if not result.wasSuccessful():
-            raise SystemExit(2)
+        if not run_tests():
+            raise SystemExit('2')
 
 
 setup(
@@ -82,3 +67,4 @@ setup(
         ),
     ],
 )
+
