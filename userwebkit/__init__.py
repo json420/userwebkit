@@ -34,8 +34,7 @@ import microfiber
 from microfiber import _oauth_header, _basic_auth_header
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-from gi.repository import GObject, Gtk, WebKit
-from gi.repository.GObject import TYPE_PYOBJECT
+from gi.repository import GLib, GObject, Gtk, WebKit
 
 
 __version__ = '13.02.0'
@@ -55,7 +54,7 @@ def handler(d):
 class CouchView(WebKit.WebView):
     __gsignals__ = {
         'open': (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE,
-            [TYPE_PYOBJECT]
+            [GObject.TYPE_PYOBJECT]
         ),
     }
 
@@ -209,7 +208,7 @@ def iter_gsignals(signals):
     assert isinstance(signals, dict)
     for (name, argnames) in signals.items():
         assert isinstance(argnames, list)
-        args = [TYPE_PYOBJECT for argname in argnames]
+        args = [GObject.TYPE_PYOBJECT for argname in argnames]
         yield (name, (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, args))
 
 
@@ -327,7 +326,7 @@ class BaseApp(object):
         self.parse()
         self.build_window()
         self.window.show_all()
-        GObject.idle_add(self.on_idle)
+        GLib.idle_add(self.on_idle)
         Gtk.main()
 
     def quit(self, *arg):
