@@ -49,7 +49,7 @@ class Test(Command):
         pass
 
     def run(self):
-        pynames = ['userwebkit', 'test_userwebkit']
+        pynames = ['userwebkit', 'userwebkit.tests']
 
         # Add unit-tests:
         loader = TestLoader()
@@ -74,11 +74,8 @@ setup(
     author='Jason Gerard DeRose',
     author_email='jderose@novacut.com',
     license='LGPLv3+',
-    py_modules=['userwebkit'],
-    cmdclass={
-        'test': Test,
-        #'build': build_with_docs,
-    },
+    packages=['userwebkit', 'userwebkit.tests'],
+    cmdclass={'test': Test},
     data_files=[
         ('share/couchdb/apps/userwebkit',
             [path.join('ui', name) for name in os.listdir('ui')]
