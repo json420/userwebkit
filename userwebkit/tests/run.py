@@ -54,7 +54,6 @@ def run_tests():
     # Run the tests:
     runner = TextTestRunner(verbosity=2)
     result = runner.run(suite)
-    success =  result.wasSuccessful()
     print(
         'userwebkit: {!r}'.format(path.abspath(userwebkit.__file__)),
         file=sys.stderr
