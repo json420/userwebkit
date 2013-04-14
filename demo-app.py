@@ -83,8 +83,8 @@ class App(BaseApp):
         self.hub.send('timer', self.count)
         self.count += 1
 
-    def dmedia_resolver(self, uri):
-        return self.proxy.ResolveURI(uri)
+    def dmedia_resolver(self, _id):
+        return self.proxy.Resolve(_id)
 
 
 app = App()
