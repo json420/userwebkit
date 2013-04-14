@@ -108,13 +108,11 @@ class DummyResolver:
     def __init__(self):
         self._calls = []
 
-    def __call__(self, uri):
-        self._calls.append(uri)
-        u = urlparse(uri)
-        assert u.scheme == 'dmedia'
-        _id = u.path
+    def __call__(self, _id):
+        self._calls.append(_id)
         assert len(_id) == 48
-        return '/'.join(['/home/.dmedia/files', _id[:2], _id[2:]])
+        filename = path.join('/home/.dmedia/files', _id[:2], _id[2:])
+        return (_id, 0, filename)
 
 
 class DummyCouchView:
@@ -304,10 +302,10 @@ class TestCouchView(TestCase):
         self.assertIsNone(view._on_request(None, None, None, request, None))
         self.assertEqual(
             request._set_uri,
-            '/'.join(['/home/.dmedia/files', id1[:2], id1[2:]])
+            '/'.join(['file:///home/.dmedia/files', id1[:2], id1[2:]])
         )
-        self.assertEqual(resolver._calls, [uri1])
-        
+        self.assertEqual(resolver._calls, [id1])
+
         # Lets try one more:
         id2 = random_id(30)
         uri2 = 'dmedia:' + id2
@@ -315,9 +313,9 @@ class TestCouchView(TestCase):
         self.assertIsNone(view._on_request(None, None, None, request, None))
         self.assertEqual(
             request._set_uri,
-            '/'.join(['/home/.dmedia/files', id2[:2], id2[2:]])
+            '/'.join(['file:///home/.dmedia/files', id2[:2], id2[2:]])
         )
-        self.assertEqual(resolver._calls, [uri1, uri2])
+        self.assertEqual(resolver._calls, [id1, id2])
 
     def test_on_nav_policy_decision(self):
         callback = DummyCallback()
