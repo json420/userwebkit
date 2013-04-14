@@ -92,11 +92,16 @@ class CouchView(WebKit.WebView):
             return
         uri = request.get_uri()
         message = request.get_message()
-        if uri.startswith('dmedia'):
+        if uri.startswith('dmedia:'):
             if self._dmedia_resolver is None:
                 request.set_uri('')
             else:
-                request.set_uri(self._dmedia_resolver(uri))
+                _id = uri[7:]
+                (_id, status, filename) = self._dmedia_resolver(_id)
+                if status == 0:
+                    request.set_uri('file://' + filename)
+                else:
+                    request.set_uri('')
             return
         u = urlparse(uri)
         if u.netloc != self._u.netloc:
