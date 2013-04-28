@@ -39,7 +39,7 @@ Examples:
 
 
 var couch = {
-    B32ALPHABET: '234567ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    DB32ALPHABET: '3456789ABCDEFGHIJKLMNOPQRSTUVWXY',
 
     time: function() {
         /* Return Unix-style timestamp like time.time() */
@@ -47,7 +47,7 @@ var couch = {
     },
 
     random_b32: function() {
-        return couch.B32ALPHABET[Math.floor(Math.random() * 32)];
+        return couch.DB32ALPHABET[Math.floor(Math.random() * 32)];
     },
 
     random_id: function(count) {    
