@@ -139,6 +139,21 @@ class DummyLogger:
         self._messages.append(args)
 
 
+class TestConstants(TestCase):
+    def test_version(self):
+        self.assertIsInstance(userwebkit.__version__, str)
+        (year, month, rev) = userwebkit.__version__.split('.')
+        y = int(year)
+        self.assertTrue(y >= 13)
+        self.assertEqual(str(y), year)
+        m = int(month)
+        self.assertTrue(1 <= m <= 12)
+        self.assertEqual('{:02d}'.format(m), month)
+        r = int(rev)
+        self.assertTrue(r >= 0)
+        self.assertEqual(str(r), rev)
+
+
 class TestFunctions(TestCase):
     def test_iter_gsignals(self):
         self.assertEqual(
