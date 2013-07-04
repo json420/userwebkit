@@ -652,7 +652,7 @@ couch.Session.prototype = {
                 self.timeout_id = null;
                 self.commit();
             }
-            this.timeout_id = setTimeout(callback, 500);
+            this.timeout_id = setTimeout(callback, 300);
         } 
     },
 
