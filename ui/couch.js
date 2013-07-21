@@ -652,7 +652,9 @@ couch.Session.prototype = {
                 self.timeout_id = null;
                 self.commit();
             }
-            this.timeout_id = setTimeout(callback, 300);
+            /* CouchDB will flush its buffer every ~1000ms, so we want
+            something fairly aperiodic to that:  */
+            this.timeout_id = setTimeout(callback, 700);
         } 
     },
 
