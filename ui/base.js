@@ -94,6 +94,15 @@ function $prepend(child, parent) {
 }
 
 
+function $unparent(id) {
+    var child = $(id);
+    if (child && child.parentNode) {
+        child.parentNode.removeChild(child);
+    }
+    return child;
+}
+
+
 function $scroll_to(id) {
     var child = $(id);
     if (! (child && child.parentNode)) {
