@@ -37,7 +37,7 @@ from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib, GObject, Gtk, WebKit
 
 
-__version__ = '13.10.0'
+__version__ = '13.11.0'
 APPS = '/usr/share/couchdb/apps/'
 GObject.threads_init()
 DBusGMainLoop(set_as_default=True)
