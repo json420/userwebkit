@@ -5,8 +5,8 @@ Maintainer: Jason Gerard DeRose <jderose@novacut.com>
 Build-Depends: debhelper (>= 9),
     python3-all (>= 3.4),
     xvfb,
-    python3-microfiber (>= 14.03),
-    python3-usercouch (>= 14.03),
+    python3-microfiber (>= 14.05),
+    python3-usercouch (>= 14.05),
     python3-dbus,
     python3-gi,
     gir1.2-gtk-3.0,
@@ -18,8 +18,8 @@ Homepage: https://launchpad.net/userwebkit
 Package: python3-userwebkit
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends},
-    python3-microfiber (>= 14.03),
-    python3-usercouch (>= 14.03),
+    python3-microfiber (>= 14.05),
+    python3-usercouch (>= 14.05),
     python3-dbus,
     python3-gi,
     gir1.2-gtk-3.0,

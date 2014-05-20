@@ -418,7 +418,7 @@ class BaseApp(object):
         return '/'.join(['/_apps', self.name, page])
 
     def load_page(self, page):
-        self.view.load_uri(self.server._full_url(self.get_path(page)))
+        self.view.load_uri(self.server.ctx.full_url(self.get_path(page)))
 
     def on_inspect(self, *args):
         self.inspector = Inspector(self.env)
