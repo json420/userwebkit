@@ -29,7 +29,6 @@ from os import path
 from base64 import b32encode
 from urllib.parse import urlparse
 from random import SystemRandom
-from urllib.parse import urlparse
 
 import microfiber
 from microfiber import random_id
