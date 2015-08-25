@@ -5,7 +5,6 @@ Maintainer: Jason Gerard DeRose <jderose@novacut.com>
 Build-Depends: debhelper (>= 9),
     dh-python,
     python3-all (>= 3.4),
-    xvfb,
     python3-microfiber (>= 15.08),
     python3-usercouch (>= 15.08),
     python3-dbus,
