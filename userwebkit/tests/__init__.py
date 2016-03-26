@@ -30,9 +30,10 @@ from base64 import b32encode
 from urllib.parse import urlparse
 from random import SystemRandom
 
+from dbase32 import random_id
+import usercouch
+from usercouch.misc import TempCouch
 import microfiber
-from microfiber import random_id
-from usercouch.misc import CouchTestCase
 from gi.repository.GObject import SIGNAL_RUN_LAST, TYPE_NONE, TYPE_PYOBJECT
 
 import userwebkit
@@ -485,14 +486,17 @@ class TestBaseApp(TestCase):
         self.assertEqual(app.get_path('foo.html'), '/_apps/supercool/foo.html')
 
 
-class TestBaseAppLive(CouchTestCase):
+class TestBaseAppLive(TestCase):
     def test_set_env(self):
         app = userwebkit.BaseApp()
         app.view = DummyCouchView()
         self.assertIsNone(app.env)
-        app.set_env(self.env)
-        self.assertIs(app.env, self.env)
-        self.assertIs(app.view._env, self.env)
+
+        couch = TempCouch()
+        env = couch.bootstrap(extra=usercouch.ALLOW_CONFIG)
+        app.set_env(env)
+        self.assertIs(app.env, env)
+        self.assertIs(app.view._env, env)
         self.assertIsInstance(app.server, microfiber.Server)
         self.assertIsInstance(app.db, microfiber.Database)
         self.assertEqual(app.db.get()['db_name'], 'userwebkit-0')
@@ -501,6 +505,4 @@ class TestBaseAppLive(CouchTestCase):
                 app.server.get('_config', 'httpd_global_handlers', '_intree'),
                 userwebkit.handler(app.ui)
             )
-        
-        
 
