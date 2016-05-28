@@ -31,7 +31,7 @@ import optparse
 import logging
 
 import microfiber
-from microfiber import _oauth_header, _basic_auth_header
+from microfiber import _oauth_header, basic_auth_header
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 from gi.repository import GLib, GObject, Gtk, WebKit
@@ -73,11 +73,16 @@ class CouchView(WebKit.WebView):
         if env is None:
             self._u = None
             self._oauth = None
-            self._basic = None
+            self._authorization = None
             return
         self._u = urlparse(env['url'])
         self._oauth = env.get('oauth')
-        self._basic = env.get('basic')
+        authorization = env.get('authorization')
+        if authorization is None:
+            basic = env.get('basic')
+            if basic is not None:
+                authorization = basic_auth_header(basic)
+        self._authorization = authorization
 
     def enable_logging(self):
         if not self._logging_enabled:
@@ -115,12 +120,11 @@ class CouchView(WebKit.WebView):
             baseurl = ''.join([u.scheme, '://', u.netloc, u.path])
             method = message.method
             h = _oauth_header(self._oauth, method, baseurl, query)
-        elif self._basic:
-            h = _basic_auth_header(self._basic)
+            authorization = h['authorization']
         else:
-            return
-        for (key, value) in h.items():
-            message.request_headers.append(key, value)
+            authorization = self._authorization
+        if authorization is not None:
+            message.request_headers.append('authorization', authorization)
 
     def _on_nav_policy_decision(self, view, frame, request, nav, policy):
         """

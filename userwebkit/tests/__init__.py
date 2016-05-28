@@ -34,6 +34,7 @@ from dbase32 import random_id
 import usercouch
 from usercouch.misc import TempCouch
 import microfiber
+from microfiber import basic_auth_header
 from gi.repository.GObject import SIGNAL_RUN_LAST, TYPE_NONE, TYPE_PYOBJECT
 
 import userwebkit
@@ -230,20 +231,30 @@ class TestCouchView(TestCase):
         self.assertIsNone(view._env)
         self.assertIsNone(view._u)
         self.assertIsNone(view._oauth)
-        self.assertIsNone(view._basic)
+        self.assertIsNone(view._authorization)
 
         view = userwebkit.CouchView(None)
         self.assertIsNone(view._env)
         self.assertIsNone(view._u)
         self.assertIsNone(view._oauth)
-        self.assertIsNone(view._basic)
+        self.assertIsNone(view._authorization)
 
         env = random_env()
         view = userwebkit.CouchView(env)
         self.assertIs(view._env, env)
         self.assertEqual(view._u, urlparse(env['url']))
         self.assertEqual(view._oauth, env['oauth'])
-        self.assertEqual(view._basic, env['basic'])
+        self.assertEqual(view._authorization,
+            basic_auth_header(env['basic'])
+        )
+
+        auth = random_id()
+        env['authorization'] = auth
+        view = userwebkit.CouchView(env)
+        self.assertIs(view._env, env)
+        self.assertEqual(view._u, urlparse(env['url']))
+        self.assertEqual(view._oauth, env['oauth'])
+        self.assertIs(view._authorization, auth)
 
     def test_set_env(self):
         view = userwebkit.CouchView()
@@ -253,7 +264,17 @@ class TestCouchView(TestCase):
         self.assertIs(view._env, env)
         self.assertEqual(view._u, urlparse(env['url']))
         self.assertEqual(view._oauth, env['oauth'])
-        self.assertEqual(view._basic, env['basic'])
+        self.assertEqual(view._authorization,
+            basic_auth_header(env['basic'])
+        )
+
+        auth = random_id()
+        env['authorization'] = auth
+        view = userwebkit.CouchView(env)
+        self.assertIs(view._env, env)
+        self.assertEqual(view._u, urlparse(env['url']))
+        self.assertEqual(view._oauth, env['oauth'])
+        self.assertIs(view._authorization, auth)
 
         env = random_env()
         del env['oauth']
@@ -262,13 +283,20 @@ class TestCouchView(TestCase):
         self.assertIs(view._env, env)
         self.assertEqual(view._u, urlparse(env['url']))
         self.assertIsNone(view._oauth)
-        self.assertIsNone(view._basic)
+        self.assertIsNone(view._authorization)
+
+        auth = random_id()
+        env['authorization'] = auth
+        self.assertIsNone(view.set_env(env))
+        self.assertEqual(view._u, urlparse(env['url']))
+        self.assertIsNone(view._oauth)
+        self.assertIs(view._authorization, auth)
 
         self.assertIsNone(view.set_env(None))
         self.assertIsNone(view._env)
         self.assertIsNone(view._u)
         self.assertIsNone(view._oauth)
-        self.assertIsNone(view._basic)
+        self.assertIsNone(view._authorization)
 
     def test_enable_logging(self):
         view = userwebkit.CouchView()
