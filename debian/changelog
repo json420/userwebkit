@@ -1,5 +1,5 @@
-userwebkit (16.05.0~alpha) xenial; urgency=low
+userwebkit (16.05.0) xenial; urgency=low
 
-  * Upstream pre-release
+  * Upstream release
 
- -- Jason Gerard DeRose <jderose@novacut.com>  Sat, 26 Mar 2016 18:50:58 -0600
+ -- Jason Gerard DeRose <jderose@novacut.com>  Fri, 27 May 2016 23:39:43 -0600
