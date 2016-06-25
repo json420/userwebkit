@@ -229,7 +229,7 @@ def hub_factory(signals):
     return Hub
 
 
-class BaseApp(object):
+class BaseApp:
     name = 'userwebkit'  # The namespace of your app, likely source package name
     dbname = 'userwebkit-0'  # Main CouchDB database name
     version = None  # Your app version, eg '12.04.0'
@@ -264,6 +264,25 @@ class BaseApp(object):
         Called from BaseApp.run(), after BaseApp.build_window().
         """
         pass
+
+    def get_env(self):
+        """
+        Called from BaseApp.on_idle() to get the CouchDB *env*.
+
+        This method should return a Microfiber-style description of the CouchDB
+        (or similar) configuration environment that UserWebKit will use to make
+        HTTP requests.
+
+        Subclasses can override this for special use-cases.  In particular, 
+        you can override this method if your application wont be using DBus to
+        get the *env* for a UserCouch instance started by a shared desktop
+        service like Dmedia.  This way you can, for example, directly start a
+        UserCouch instance from your main application process when that makes
+        more sense.
+        """
+        session = dbus.SessionBus()
+        self.proxy = session.get_object(self.proxy_bus, self.proxy_path)
+        return json.loads(self.proxy.GetEnv())
 
     def post_env_init(self):
         """
@@ -349,9 +368,6 @@ class BaseApp(object):
         if self.options.benchmark:
             Gtk.main_quit()
             return
-        session = dbus.SessionBus()
-        self.proxy = session.get_object(self.proxy_bus, self.proxy_path)
-        env = json.loads(self.proxy.GetEnv())
 
         # Add the CouchView
         self.view = CouchView(None, self.dmedia_resolver)
@@ -369,7 +385,7 @@ class BaseApp(object):
         self.hub = hub_factory(self.signals)(self.view)
         self.connect_hub_signals(self.hub)
         
-        self.set_env(env)
+        self.set_env(self.get_env())
         self.post_env_init()
         page = self.get_page()
         self.load_page(page)
