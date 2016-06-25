@@ -396,10 +396,10 @@ class BaseApp:
         self.server = microfiber.Server(env)
         self.db = microfiber.Database(self.dbname, env) 
         self.db.ensure()
-        if self.intree:
-            self.server.put(
-                handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
-            )
+#        if self.intree:
+#            self.server.put(
+#                handler(self.ui), '_config', 'httpd_global_handlers', '_intree'
+#            )
         self.view.set_env(env)
         if self.inspector is not None:
             self.inspector.view.set_env(env)
